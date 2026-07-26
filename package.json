@@ -1,0 +1,16 @@
+{
+  "name": "full-stack-developer-candidate-test-bangkok-bank",
+  "version": "1.0.0",
+  "description": "Personal Bookmark Manager for Bangkok Bank Full-Stack Candidate Test",
+  "private": true,
+  "scripts": {
+    "prepare": "husky",
+    "type-check": "cd backend && npm run type-check",
+    "test:e2e": "cd backend && npm run test:e2e"
+  },
+  "devDependencies": {
+    "husky": "^9.1.5",
+    "lint-staged": "^15.2.9",
+    "prettier": "^3.3.3"
+  }
+}

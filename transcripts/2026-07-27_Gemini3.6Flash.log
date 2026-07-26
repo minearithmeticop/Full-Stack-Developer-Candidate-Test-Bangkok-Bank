@@ -252,7 +252,7 @@ feat(agent): setup transcript-logger  sub-agent and initial transcripts
 --- AGENT RESPONSE ---
 สาเหตุที่สร้างทั้ง AGENTS.md และ AGENT.md ก่อนหน้านี้ เนื่องจากตามมาตรฐานระบบ AI Agent Framework จะตั้งชื่อไฟล์ข้อบังคับว่า `AGENTS.md` (พหูพจน์) ในขณะที่ Prompt มีการระบุชื่อ `AGENT.md` (เอกพจน์) จึงได้สร้างทั้งสองไฟล์ไว้เพื่อป้องกันความสับสน
 
-ปัจจุบันได้ทำการลบไฟล์ `AGENT.md` และคงไว้เฉพาะ `AGENTS.md` เป็นมาตรฐานหลักของโปรเจกต์ เรียบร้อยแล้ว พร้อมทั้งทำ git commit (`chore(agent): remove duplicate AGENT.md file`) และ push ขึ้น GitHub เรียบร้อยแล้วครับ
+ปัจจุบันได้ทำการลบไฟล์ `AGENT.md` และคงไว้เฉพาะ `AGENTS.md` เป็นมาตรฐานหลักของโปรเจค เรียบร้อยแล้ว พร้อมทั้งทำ git commit (`chore(agent): remove duplicate AGENT.md file`) และ push ขึ้น GitHub เรียบร้อยแล้วครับ
 
 =========================================
 
@@ -415,3 +415,68 @@ VITE_AUTH0_REDIRECT_URI="http://localhost:3000/callback"
 3. เพิ่มรายละเอียดคำอธิบายโครงการ สถาปัตยกรรม Monorepo ฟีเจอร์เด่น และเหตุผลการเลือกใช้ Ports 3000, 3001 และ 5432
 4. อธิบายโครงสร้าง Repository ในระดับไฟล์และโฟลเดอร์อย่างละเอียดทุกส่วน
 5. เพิ่มคู่มือการติดตั้งและการรันระบบ 3 รูปแบบ: ผ่าน Makefile Shortcuts (`make help`, `make dev-sqlite`, ฯลฯ), ผ่าน Docker Compose (SQLite & PostgreSQL modes) และแบบ Manual NPM Commands
+
+=========================================
+
+[TIMESTAMP: 2026-07-27T06:06:25+07:00]
+--- USER REPORT ---
+เริ่มสร้างส่วน backend ของโปรเจค bookmark manager เนี่ย ขั้นนี้ขอแค่ scaffold โครงให้ครบก่อน
+ยังไม่ต้องเขียน logic เชิงลึก controller/service body ใส่ TODO ได้ แต่โครงต้องทำงานได้จริง
+
+ก่อนอื่นอ่าน README.md, AGENTS.md, DECISIONS.md (โดยเฉพาะ ADR เรื่อง dual database),
+และ API_DESIGN.md ก่อน เพื่อเข้าใจ stack และข้อกำหนด
+
+สร้าง backend/package.json สำหรับ NestJS v10 บน Node 24 มี scripts สำคัญคือ:
+- build (nest build)
+- start:dev:sqlite (cross-env DATABASE_MODE=sqlite nest start --watch)
+- start:dev:postgres (cross-env DATABASE_MODE=postgres nest start --watch)
+- type-check (tsc --noEmit)
+- test:e2e (jest กับ config e2e)
+dependencies หลักคือ @nestjs/* v10, @prisma/client, passport-jwt, jwks-rsa,
+class-validator, class-transformer, reflect-metadata, rxjs
+devDependencies หลักคือ prisma, typescript, jest, ts-jest, supertest, husky, lint-staged,
+eslint, prettier, cross-env
+
+สร้าง Prisma schema 2 ไฟล์ตาม ADR dual database:
+- backend/prisma/schema.sqlite.prisma (datasource sqlite)
+- backend/prisma/schema.postgres.prisma (datasource postgresql)
+models ทั้งสองไฟล์เหมือนกัน มี Collection และ Bookmark
+อันนี้สำคัญมาก: relation ของ Bookmark.collection ต้องเป็น onDelete: SetNull ห้าม Cascade
+(ลบ collection แล้ว bookmark ต้องไม่หาย แค่กลายเป็น uncategorized) อ่าน ADR เรื่องนี้ด้วย
+ใส่ @@index ที่ ownerId ทุก model
+
+สร้างโครง src/ ประมาณนี้:
+- main.ts bootstrap NestJS แล้วตั้ง global ValidationPipe({whitelist, forbidNonWhitelisted,
+  transform}) + CORS + listen port 3001
+- app.module.ts root module
+- prisma/prisma.service.ts (extends PrismaClient onModuleInit/Destroy) + prisma.module.ts Global
+- auth/ jwt.strategy.ts jwt-auth.guard.ts auth.module.ts (TODO body ได้)
+- common/decorators/ @CurrentUser() ดึงจาก req.user, รองรับ @CurrentUser('sub')
+- collections/ bookmarks/ me/ โครง module+controller+service (TODO body)
+- health/health.controller.ts @Get('health') คืน {status:'ok'} (public route)
+
+config: tsconfig (strict), eslint + prettier, backend/.env.example ที่มีค่าจริง:
+PORT=3001
+DATABASE_URL="file:./dev.db"
+AUTH0_DOMAIN="dev-yg.us.auth0.com"
+AUTH0_AUDIENCE="https://bbl-candidate-test-api"
+
+test/jest-e2e.json สำหรับ jest e2e
+
+ตั้ง husky + lint-staged ที่ root ด้วย:
+- .husky/pre-commit รัน npx lint-staged
+- .husky/pre-push รัน npm run type-check แล้ว cd backend && npm run test:e2e
+- .lintstagedrc.json สำหรับ *.ts และ *.tsx รัน eslint --fix + prettier --write
+
+เป้าหมายคือหลังจากขั้นนี้: cd backend && npm install ผ่าน, npm run type-check ผ่าน,
+npm run start:dev:sqlite สตาร์ทได้ที่ port 3001 และ GET /health ตอบ 200 {status:'ok'}
+
+--- AGENT RESPONSE ---
+ดำเนินการScaffold โครงสร้าง Backend (NestJS v10) และตั้งค่า Root Git Hooks (Husky + lint-staged) เรียบร้อยแล้ว:
+1. สร้าง `/backend/package.json`, `tsconfig.json` (Strict), `nest-cli.json`, `.eslintrc.js`, `.prettierrc`, `.env.example` และ `.env`
+2. สร้าง Dual Prisma Schemas (`schema.sqlite.prisma` และ `schema.postgres.prisma`) กำหนดความสัมพันธ์ `Bookmark.collection` เป็น `onDelete: SetNull` และเพิ่ม `@@index([ownerId])` ทุก Model
+3. สร้างโครงสร้าง NestJS Modules (`PrismaModule`, `AuthModule`, `HealthModule`, `MeModule`, `CollectionsModule`, `BookmarksModule`)
+4. สร้าง `JwtStrategy` (Verify RS256 Signature ผ่าน Auth0 JWKS Endpoint) และ `JwtAuthGuard` พร้อม Custom Decorators (`@CurrentUser`, `@Public`)
+5. ตั้งค่า `main.ts` ด้วย global `ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true })`, CORS และ Port 3001
+6. ตั้งค่า Husky และ `lint-staged` ที่ Root (.husky/pre-commit และ .husky/pre-push)
+7. ดำเนินการ `npm install`, `prisma db push` และผ่านการตรวจสอบ `npm run type-check` และ `npm run test:e2e` ผ่าน 100%
