@@ -23,6 +23,10 @@
 * **Status**: Accepted
 * **Context (บริบท)**:
   ในการเชื่อมต่อระหว่าง React Frontend และ NestJS Backend ผ่านระบบ Auth0 OIDC/OAuth2 มี Token หลัก 2 ประเภทเกิดขึ้น คือ ID Token และ Access Token
+  - **Auth0 Domain**: `dev-yg.us.auth0.com`
+  - **Auth0 Client ID (Public Test Tenant)**: `H9F6QG5SzTKMv0tbmgxLj9LjG1EKVllA`
+  - **Public Test User Account**: `candidate@test.com` / `@password1234` (จัดเตรียมไว้สำหรับการทดสอบยืนยันตัวตนและการขอรับ Access Token)
+
 * **Decision (การตัดสินใจ)**:
   ตกลงใช้ **JWT Access Token** ใน HTTP Header `Authorization: Bearer <access_token>` สำหรับการร้องขอข้อมูลไปยัง NestJS Backend API ทั้งหมด
 * **Rationale (เหตุผล)**:

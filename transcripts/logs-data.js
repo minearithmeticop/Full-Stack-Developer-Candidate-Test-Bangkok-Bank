@@ -528,6 +528,32 @@ entry ล่าสุดมี backtick ดิบๆ อยู่ข้างใ
 2. อัปเดต \`SKILL.md\` (ทั้งใน \`.agents/skills/transcript-logger/SKILL.md\` และ global config): เพิ่มหัวข้อ "5. กฎการหนีอักขระพิเศษสำหรับ transcripts/logs-data.js (CRITICAL ESCAPING RULES)" กำหนดกฎบังคับในการ Escape Backticks (\`\\\` \`), Backslashes (\`\\\\ \`) และ Template Interpolations (\`\\\${ \`) พร้อมตัวอย่าง Before/After ชัดเจน
 
 =========================================
+
+[TIMESTAMP: 2026-07-27T06:54:08+07:00]
+--- USER REPORT ---
+ใช้ข้อมูลนี้:
+- Auth0 Client ID: H9F6QG5SzTKMv0tbmgxLj9LjG1EKVllA
+- Test user: candidate@test.com / @password1234
+ขอให้ฝังข้อมูลทั้ง 2 อย่างนี้ลงในเอกสารที่เกี่ยวข้อง เพื่อให้เราไม่ต้องไปหาเอง:
+1. README.md ส่วน Environment Variables:
+   - VITE_AUTH0_CLIENT_ID="H9F6QG5SzTKMv0tbmgxLj9LjG1EKVllA"
+   - เพิ่มหมายเหตุว่ามี test user ให้ใช้ทดสอบ (candidate@test.com / @password1234)
+     ระบุชัดว่าเป็น public test tenant ไม่ใช่ secret
+2. backend/.env.example และ frontend/.env.example:
+   - frontend ใส่ VITE_AUTH0_CLIENT_ID ให้เลย (ไม่ใช่ค่าว่าง)
+   - ส่วนอื่นคงเดิม (domain/audience/redirect_uri)
+3. DECISIONS.md ส่วน ADR เรื่อง OIDC:
+   - เพิ่ม Client ID กับ test user ลงใน context เผื่อเราอยาก verify เอง
+ข้อมูลพวกนี้เป็น public test tenant ไม่ใช่ secret จึง commit ลง repo ได้
+
+--- AGENT RESPONSE ---
+ฝังข้อมูล Auth0 Client ID และ Public Test User Credentials ลงในเอกสารและไฟล์ Environment Example เรียบร้อยแล้ว:
+1. อัปเดต \`README.md\`: ตั้งค่า \`VITE_AUTH0_CLIENT_ID="H9F6QG5SzTKMv0tbmgxLj9LjG1EKVllA"\` ในส่วน Frontend Environment Config พร้อมเพิ่มกล่องข้อความแจ้งเตือน Public Test Tenant Credentials (\`candidate@test.com\` / \`@password1234\`)
+2. สร้าง/อัปเดต \`frontend/.env.example\` และ \`frontend/.env\`: ระบุค่า \`VITE_AUTH0_CLIENT_ID="H9F6QG5SzTKMv0tbmgxLj9LjG1EKVllA"\` แบบพร้อมใช้งาน
+3. อัปเดต \`DECISIONS.md\`: เพิ่มรายละเอียด Auth0 Client ID และ Public Test Account ลงใน Context ของ ADR-001
+
+=========================================
+
 `,
 
   "2026-07-26_Gemini3.6Flash.log": `=========================================

@@ -121,12 +121,20 @@ VITE_API_URL="http://localhost:3001"
 
 # Auth0 Client Configuration (PKCE OIDC Flow)
 VITE_AUTH0_DOMAIN="dev-yg.us.auth0.com"
-VITE_AUTH0_CLIENT_ID="your_auth0_client_id_here"
+VITE_AUTH0_CLIENT_ID="H9F6QG5SzTKMv0tbmgxLj9LjG1EKVllA"
 VITE_AUTH0_AUDIENCE="https://bbl-candidate-test-api"
 VITE_AUTH0_REDIRECT_URI="http://localhost:3000/callback"
 ```
 
+> [!NOTE]
+> **🔑 Public Test Tenant Credentials**:
+> สามารถใช้บัญชีผู้ใช้และ Auth0 Client ID ต่อไปนี้สำหรับการทดสอบยืนยันตัวตนและการเข้าถึงระบบ (Public Test Tenant ไม่ใช่ข้อมูลความลับสำหรับ Production):
+> - **Auth0 Client ID**: `H9F6QG5SzTKMv0tbmgxLj9LjG1EKVllA`
+> - **Test User Email**: `candidate@test.com`
+> - **Test User Password**: `@password1234`
+
 ---
+
 
 ## 💻 วิธีการติดตั้งและรันระบบ (Installation & Running Guide)
 
