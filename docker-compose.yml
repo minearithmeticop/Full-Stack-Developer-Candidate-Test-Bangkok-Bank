@@ -1,0 +1,25 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: bookmark_backend_sqlite
+    ports:
+      - "3001:3001"
+    environment:
+      - PORT=3001
+      - DATABASE_URL=file:./dev.db
+      - AUTH0_DOMAIN=dev-yg.us.auth0.com
+      - AUTH0_AUDIENCE=https://bbl-candidate-test-api
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: bookmark_frontend_sqlite
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    restart: unless-stopped

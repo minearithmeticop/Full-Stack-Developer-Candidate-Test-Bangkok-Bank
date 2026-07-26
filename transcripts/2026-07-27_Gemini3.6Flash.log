@@ -316,3 +316,33 @@ guardrails ที่ใช้ husky กับ lint-staged, พวกจุดท
 5. สร้าง `.gitignore`: กำหนดกฎยกเว้นไฟล์ node_modules, dist, .env, *.db, IDE และ OS Files
 
 =========================================
+
+[TIMESTAMP: 2026-07-27T05:29:43+07:00]
+--- USER REPORT ---
+ช่วยสร้าง docker-compose สำหรับโปรเจค bookmark manager เนี่ย อยากได้ 2 ไฟล์เพราะเราใช้
+database ได้ทั้ง SQLite กับ PostgreSQL
+
+ไฟล์แรก docker-compose.yml สำหรับโหมด SQLite:
+- service backend: build จาก context ./backend, port 3001:3001,
+  environment เป็น PORT=3001, DATABASE_URL=file:./dev.db,
+  AUTH0_DOMAIN=dev-yg.us.auth0.com, AUTH0_AUDIENCE=https://bbl-candidate-test-api,
+  restart unless-stopped
+- service frontend: build จาก context ./frontend, port 3000:80,
+  depends_on backend, restart unless-stopped
+
+ไฟล์ที่สอง docker-compose.postgres.yml สำหรับโหมด PostgreSQL:
+- service db: ใช้ image postgres:17-alpine, env POSTGRES_USER, POSTGRES_PASSWORD,
+  POSTGRES_DB, volume สำหรับเก็บ data, healthcheck เช็ค pg_isready
+- service backend: เหมือนของ SQLite แต่ DATABASE_URL เป็น postgresql ที่ชี้ไปที่ service db,
+  depends_on db แบบ condition: service_healthy
+- service frontend: เหมือน SQLite mode เป๊ะ
+
+อ่าน AGENTS.md กับ DECISIONS.md ก่อนนะ เพื่อดูว่าใช้ stack อะไรบ้าง และค่า env ต้องตรง
+กับที่ระบุไว้ในนั้น โดยเฉพาะเรื่อง Port 3001 backend, 3000 frontend, Auth0 config ต้องตรง
+
+--- AGENT RESPONSE ---
+ดำเนินการสร้างไฟล์ Docker Compose ทั้ง 2 ไฟล์เรียบร้อยแล้ว:
+1. `docker-compose.yml` (สำหรับ SQLite Mode): กำหนด backend service (Port 3001:3001, DATABASE_URL=file:./dev.db, Auth0 credentials) และ frontend service (Port 3000:80)
+2. `docker-compose.postgres.yml` (สำหรับ PostgreSQL Mode): กำหนด db service (`postgres:17-alpine`, healthcheck `pg_isready`), backend service (DATABASE_URL=postgresql://..., depends_on db condition: service_healthy) และ frontend service (Port 3000:80)
+
+=========================================
