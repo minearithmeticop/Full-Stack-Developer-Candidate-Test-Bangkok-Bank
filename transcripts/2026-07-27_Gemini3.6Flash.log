@@ -373,3 +373,45 @@ database ได้ทั้ง SQLite กับ PostgreSQL
 ดำเนินการสร้างไฟล์ `Makefile` ที่ Root ของ Repository เรียบร้อยแล้ว:
 - กำหนด `.PHONY` ครบถ้วนทุก Targets (`help`, `dev-sqlite`, `dev-postgres`, `dev-frontend`, `test-e2e`, `docker-up`, `docker-postgres`, `docker-down`, `build`)
 - กำหนด `.DEFAULT_GOAL := help` เพื่อให้เมื่อผู้ใช้พิมพ์ `make` ระบบจะแสดง Help Menu แนะนำคำสั่งทั้งหมดพร้อมคำอธิบายไว้อย่างสวยงามและอ่านง่าย
+
+=========================================
+
+[TIMESTAMP: 2026-07-27T05:58:54+07:00]
+--- USER REPORT ---
+ช่วยแก้ README.md ให้สวยและมีรายละเอียดมากขึ้นหน่อย อันนี้มันดูลวกเกินไป เหมือนแค่เอาที่บอกมาแปะ
+โดยไม่ได้เติมอะไรเพิ่มเลย อยากให้คนอ่านเข้าใจได้จริงว่าต้องทำอะไรบ้าง
+
+เนื้อหาหลักๆ คงไว้ทั้งหมดนะ แค่อยากให้เพิ่มรายละเอียดในแต่ละส่วน ตัวอย่างที่เจอปัญหาชัดที่สุดคือ
+ส่วน Environment Variables ตอนนี้มันเขียนแบบ DATABASE_URL="" AUTH0_DOMAIN="" แบบนี้
+ไม่มีค่าตัวอย่างให้ดูเลย คนอ่านจะไม่รู้ว่าจริงๆ แล้วค่ามันหน้าตายังไง
+
+เช่นส่วน Backend env ควรจะมีค่าตัวอย่างแบบนี้:
+PORT=3001
+DATABASE_URL="file:./dev.db"
+AUTH0_DOMAIN="dev-yg.us.auth0.com"
+AUTH0_AUDIENCE="https://bbl-candidate-test-api"
+
+ส่วน Frontend env ก็เหมือนกัน ใส่ค่าตัวอย่างที่ใช้ได้จริงให้หมด เช่น:
+VITE_API_URL="http://localhost:3001"
+VITE_AUTH0_DOMAIN="dev-yg.us.auth0.com"
+VITE_AUTH0_CLIENT_ID="ใส่ client id ของแอปที่สร้างใน Auth0"
+VITE_AUTH0_AUDIENCE="https://bbl-candidate-test-api"
+VITE_AUTH0_REDIRECT_URI="http://localhost:3000/callback"
+
+มี bug ตรง VITE_API_URL ตอนนี้เขียนเป็น "http:localhost:3001" ขาด // ไป
+แก้เป็น "http://localhost:3001" ด้วยนะ
+
+นอกจากนั้นก็เช็คส่วนอื่นด้วยว่ามีรายละเอียดพอหรือยัง เช่น:
+- ส่วนคำอธิบายเปิด อาจเพิ่มว่าใครใช้งาน, เทคโนโลยีหลัก, ฟีเจอร์เด่น
+- ส่วนโครงสร้าง repo แต่ละโฟลเดอร์ทำอะไร อธิบายให้ละเอียดกว่านี้
+- ส่วน ports อาจอธิบายเพิ่มว่าทำไมต้องใช้ port นี้
+- ส่วนคำสั่งรัน ควรมีคำอธิบายว่าแต่ละคำสั่งทำอะไร และอาจเพิ่มวิธีรันด้วย docker
+  เพราะเรามี Makefile กับ docker-compose อยู่แล้ว น่าจะเอามาใส่ด้วย
+
+--- AGENT RESPONSE ---
+ดำเนินการปรับปรุงแก้ไขไฟล์ `README.md` เป็นเอกสาร Open Source ระดับมืออาชีพเรียบร้อยแล้ว:
+1. แก้ไข Bug `VITE_API_URL` ให้เป็น `http://localhost:3001` (เติม `//` ที่ขาดหายไป)
+2. เพิ่มรายละเอียดตัวอย่างค่า Environment Variables (`.env`) ฝั่ง Backend และ Frontend แบบพร้อมใช้งาน
+3. เพิ่มรายละเอียดคำอธิบายโครงการ สถาปัตยกรรม Monorepo ฟีเจอร์เด่น และเหตุผลการเลือกใช้ Ports 3000, 3001 และ 5432
+4. อธิบายโครงสร้าง Repository ในระดับไฟล์และโฟลเดอร์อย่างละเอียดทุกส่วน
+5. เพิ่มคู่มือการติดตั้งและการรันระบบ 3 รูปแบบ: ผ่าน Makefile Shortcuts (`make help`, `make dev-sqlite`, ฯลฯ), ผ่าน Docker Compose (SQLite & PostgreSQL modes) และแบบ Manual NPM Commands
