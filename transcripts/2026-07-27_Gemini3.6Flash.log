@@ -274,3 +274,45 @@ AI Agent Self-Correction & Recovery
 
 =========================================
 
+[TIMESTAMP: 2026-07-27T05:16:31+07:00]
+--- USER REPORT ---
+ช่วย setup เอกสารพื้นฐานของ repo หน่อย เราจะทำ bookmark manager ส่วนตัวให้ Bangkok Bank
+ตอนนี้ repo มีแค่ README.md กับ AGENTS.md อยู่แล้ว อยากให้เติม/สร้างเอกสารส่วนที่ขาดให้ครบ
+
+เช็ค AGENTS.md ก่อนว่ามี security invariants ครบไหม ควรจะมี 4 ข้อหลักๆ:
+- การแยกข้อมูลระหว่าง user (multi-tenant isolation) ทุก query ต้องกรองด้วย ownerId
+- การ validate DTO ด้วย class-validator
+- การ auth ผ่าน Auth0 ด้วย PKCE และ verify JWT ด้วย RS256 ผ่าน JWKS
+- โครงสร้างแยก backend (NestJS + Prisma) กับ frontend (React + Vite + MUI + React Router)
+
+ถ้าขาดอะไรก็เติมให้ครบ รวมถึง coding guidelines เช่น explicit return types, ใช้ NestJS exceptions
+ไม่ใช่ custom error object, ใช้ MUI components เป็นหลัก ฯลฯ
+
+ส่วนที่ยังไม่มีเลยให้สร้างใหม่:
+DECISIONS.md - เก็บ ADR ต่างๆ เช่นทำไมถึงเลือกใช้ JWT Access Token แทน ID Token,
+ทำไมต้อง verify ผ่าน Auth0 JWKS, ทำไมใช้ SQLite สำหรับ dev และ PostgreSQL สำหรับ production,
+เรื่องการลบ collection ไม่ใช่ cascade แต่ตั้ง collectionId เป็น null เพื่อไม่ให้ bookmark หาย,
+เรื่อง frontend ใช้ TanStack Query กับ Axios
+
+API_DESIGN.md - spec ของ REST API ทั้งหมด มี endpoint /me, /collections, /bookmarks
+ระบุ method status code และรูปแบบ response ให้ครบ รวมถึงกฎการ auth ว่าทุก route
+ยกเว้น /health ต้องมี Bearer token และ token ต้อง verify ผ่าน JWKS
+
+แล้วเพิ่ม endpoint นึงด้วย GET /collections/all สำหรับดึงทุก collection ของ user ปัจจุบัน
+พร้อม bookmarks ข้างใน nested มาด้วยใน response เดียว เพื่อหลีกเลี่ยง N+1 query
+ตอน frontend จะแสดงทั้งสองอย่างพร้อมกัน
+
+AI_WORKFLOW.md - เก็บวิธีการทำงานกับ AI agent, แผนแบ่งงานเป็น milestone,
+guardrails ที่ใช้ husky กับ lint-staged, พวกจุดที่ AI เคยพลาดและวิธีแก้
+
+สร้าง .gitignore ที่ root ด้วย ครอบ node_modules, dist, .env, db files, IDE stuff
+
+--- AGENT RESPONSE ---
+ดำเนินการจัดทำและอัปเดตเอกสารพื้นฐานทั้งหมดของ Repository เรียบร้อยแล้ว:
+1. อัปเดต `AGENTS.md`: เพิ่ม 4 Security Invariants และ Coding Guidelines ครบถ้วน
+2. สร้าง `DECISIONS.md`: บันทึก Architecture Decision Records (ADRs) ครบทั้ง 5 หัวข้อหลัก
+3. สร้าง `API_DESIGN.md`: ออกแบบ REST API Specification ครอบคลุม Auth/Security, DTOs, Error Handling และ Endpoint `GET /collections/all` (Single Payload / Anti-N+1 Query)
+4. สร้าง `AI_WORKFLOW.md`: บันทึกแผนงาน Milestone Roadmap, Husky/lint-staged Guardrails และ Historical Pitfalls
+5. สร้าง `.gitignore`: กำหนดกฎยกเว้นไฟล์ node_modules, dist, .env, *.db, IDE และ OS Files
+
+=========================================

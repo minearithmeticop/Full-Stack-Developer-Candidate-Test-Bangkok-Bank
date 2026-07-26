@@ -64,7 +64,34 @@
 
 ---
 
-## 4. 📜 Daily Transcript Logging Requirement
+## 4. 🔒 Security Invariants (หลักความปลอดภัยขั้นเด็ดขาด)
+
+ระบบต้องปฏิบัติตาม Security Invariants ทั้ง 4 ข้อนี้อย่างเคร่งครัดโดยไม่มีข้อละเว้น:
+
+1. **Multi-tenant Data Isolation**:
+   - ทุก Database Query (Prisma Operations: `findMany`, `findOne`, `create`, `update`, `delete`) **ต้องกรองด้วย `ownerId`** ของ User ปัจจุบันที่ดึงจาก Auth0 JWTเสมอ ป้องกันการรั่วไหลของข้อมูลข้าม Tenant (Cross-tenant Data Leakage) 100%
+2. **DTO & Payload Validation**:
+   - ทุก Request Body และ Query Parameters ต้องได้รับการตรวจสอบผ่าน `ValidationPipe` ของ NestJS ร่วมกับ `class-validator` และ `class-transformer` เพื่อป้องกัน Injection Attcks และ Malformed Payloads
+3. **Auth0 Authentication with PKCE & JWKS Verification**:
+   - ฝั่ง Frontend ต้องยืนยันตัวตนผ่าน Auth0 PKCE OIDC Flow
+   - ฝั่ง Backend ต้องยืนยันสิทธิ์ผ่าน `AuthGuard` ด้วยการตรวจสอบ JWT Access Token แบบ RS256 Signature Verification โดยดึง Public Key จาก Auth0 JWKS Endpoint (`/.well-known/jwks.json`)
+4. **Clean Monorepo Architectural Separation**:
+   - แยกส่วน Backend (NestJS + Prisma ORM) และ Frontend (React 19+ + Vite + MUI v9 + React Router) ออกจากกันอย่างชัดเจน โค้ดฝั่ง Client ห้ามเข้าถึง Database หรือ Private Secrets โดยตรง
+
+---
+
+## 5. 📐 Coding Guidelines & Quality Standards
+
+1. **Explicit Return Types**:
+   - ฟังก์ชันและเมธอดทุกตัวใน TypeScript ทั้ง Backend และ Frontend ต้องระบุ Return Type อย่างชัดเจน (เช่น `async findAll(ownerId: string): Promise<CollectionResponseDto[]>`)
+2. **NestJS Built-in Exceptions**:
+   - ใช้ NestJS HTTP Exceptions มาตรฐาน (`NotFoundException`, `UnauthorizedException`, `ForbiddenException`, `BadRequestException`) **ห้าม** สร้าง Custom Generic Error Object ขึ้นมาเอง เพื่อให้ระบบส่ง HTTP Status Codes และ Response Structure ตามมาตรฐาน REST API
+3. **UI Standard Component Library**:
+   - ฝั่ง Frontend ใช้ Material UI (MUI v9) เป็น UI Component Library หลักของระบบ เพื่อควบคุม Aesthetics และ Design System ให้สอดคล้องกันทั้งแอปพลิเคชัน
+
+---
+
+## 6. 📜 Daily Transcript Logging Requirement
 
 1. Agent ต้องทำการบันทึกประวัติการสนทนาทุกครั้งที่มีการส่ง User Prompt และ Agent Response ลงในไฟล์ Text Log รายวันในโฟลเดอร์ `/transcripts`
 2. รูปแบบชื่อไฟล์: `/transcripts/YYYY-MM-DD_[AgentModel].log` (เช่น `/transcripts/2026-07-27_Gemini3.6Flash.log`)
