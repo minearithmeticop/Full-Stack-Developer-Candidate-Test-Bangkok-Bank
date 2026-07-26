@@ -351,6 +351,35 @@ database ได้ทั้ง SQLite กับ PostgreSQL
 2. \`docker-compose.postgres.yml\` (สำหรับ PostgreSQL Mode): กำหนด db service (\`postgres:17-alpine\`, healthcheck \`pg_isready\`), backend service (DATABASE_URL=postgresql://..., depends_on db condition: service_healthy) และ frontend service (Port 3000:80)
 
 =========================================
+
+[TIMESTAMP: 2026-07-27T05:45:45+07:00]
+--- USER REPORT ---
+ช่วยสร้าง Makefile ที่ root ของ repo หน่อย สำหรับเป็น shortcut คำสั่งต่างๆ ของโปรเจค
+
+เป้าหมายคือให้ developer พิมพ์ make <something> แล้วรันคำสั่งที่ใช้บ่อยได้เลย
+อยากได้ targets ประมาณนี้:
+
+- help: แสดงรายการคำสั่งทั้งหมดพร้อมคำอธิบายสั้นๆ
+- dev-sqlite: รัน backend ในโหมด SQLite (cd backend && npm run start:dev:sqlite)
+- dev-postgres: รัน backend ในโหมด PostgreSQL (cd backend && npm run start:dev:postgres)
+- dev-frontend: รัน frontend dev server (cd frontend && npm run dev)
+- test-e2e: รัน e2e tests (cd backend && npm run test:e2e)
+- docker-up: รัน docker-compose up แบบ SQLite full stack
+- docker-postgres: รัน docker-compose -f docker-compose.postgres.yml up แบบ PostgreSQL full stack
+- docker-down: หยุดและลบ containers ทั้งสอง stack (รันทั้ง sqlite และ postgres down --remove-orphans)
+- build: build ทั้ง backend และ frontend
+
+เช็ค docker-compose.yml และ docker-compose.postgres.yml ที่เพิ่งสร้างก่อนนะ เพื่อให้ชื่อไฟล์
+กับคำสั่งตรงกัน
+
+ทำเป็น .PHONY ทุก target แล้วก็ส่วน help ทำให้อ่านง่ายหน่อย พิมพ์ make แล้วเห็นรายการเลย
+
+--- AGENT RESPONSE ---
+ดำเนินการสร้างไฟล์ \`Makefile\` ที่ Root ของ Repository เรียบร้อยแล้ว:
+- กำหนด \`.PHONY\` ครบถ้วนทุก Targets (\`help\`, \`dev-sqlite\`, \`dev-postgres\`, \`dev-frontend\`, \`test-e2e\`, \`docker-up\`, \`docker-postgres\`, \`docker-down\`, \`build\`)
+- กำหนด \`.DEFAULT_GOAL := help\` เพื่อให้เมื่อผู้ใช้พิมพ์ \`make\` ระบบจะแสดง Help Menu แนะนำคำสั่งทั้งหมดพร้อมคำอธิบายไว้อย่างสวยงามและอ่านง่าย
+
+=========================================
 `,
 
   "2026-07-26_Gemini3.6Flash.log": `=========================================
