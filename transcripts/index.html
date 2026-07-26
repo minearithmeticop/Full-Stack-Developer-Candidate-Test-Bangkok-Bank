@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bangkok Bank Candidate Test — AI Conversation Log Viewer</title>
+
+  <!-- Google Fonts & Prism Syntax Highlighting -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+
+  <!-- Marked.js & Prism.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/4.3.0/marked.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+
+  <!-- Embedded Data Provider (Bypasses file:// CORS restriction and indexes all daily logs) -->
+  <script src="logs-data.js"></script>
+
+  <style>
+    :root {
+      --bg-dark: #0b1120;
+      --card-bg: rgba(15, 23, 42, 0.85);
+      --card-border: rgba(56, 189, 248, 0.15);
+      --user-header-bg: rgba(30, 58, 138, 0.4);
+      --user-section-bg: rgba(29, 78, 216, 0.12);
+      --agent-section-bg: rgba(15, 23, 42, 0.6);
+      --text-primary: #f8fafc;
+      --text-muted: #94a3b8;
+      --accent-blue: #3b82f6;
+      --accent-emerald: #10b981;
+      --accent-cyan: #38bdf8;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: var(--bg-dark);
+      color: var(--text-primary);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Navbar Header */
+    header {
+      background: #0f172a;
+      border-bottom: 1px solid var(--card-border);
+      padding: 14px 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, #2563eb, #7c3aed);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 16px;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+    }
+
+    .brand-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #ffffff;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    /* Navbar Dropdown Select */
+    .log-dropdown-container {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(30, 41, 59, 0.8);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 8px;
+      padding: 4px 10px;
+    }
+
+    .log-dropdown-label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .log-select {
+      background: transparent;
+      border: none;
+      color: #38bdf8;
+      font-size: 0.85rem;
+      font-weight: 600;
+      outline: none;
+      cursor: pointer;
+      padding: 4px 8px;
+    }
+
+    .log-select option {
+      background: #0f172a;
+      color: #ffffff;
+    }
+
+    .btn-open-file {
+      background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+      color: white;
+      border: none;
+      padding: 7px 14px;
+      border-radius: 8px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+
+    .btn-open-file:hover {
+      opacity: 0.9;
+      transform: translateY(-1px);
+    }
+
+    #fileInput { display: none; }
+
+    /* Main Container */
+    main {
+      flex: 1;
+      max-width: 1200px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    /* Session Summary Bar */
+    .session-summary-bar {
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.88rem;
+    }
+
+    .summary-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .summary-label {
+      color: var(--text-muted);
+    }
+
+    .summary-value {
+      font-weight: 600;
+      color: #ffffff;
+    }
+
+    /* Turn Container Card */
+    .turn-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .turn-card-header {
+      background: rgba(30, 41, 59, 0.6);
+      border-bottom: 1px solid var(--card-border);
+      padding: 10px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-family: 'Fira Code', monospace;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+
+    .turn-status-badge {
+      background: rgba(16, 185, 129, 0.15);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 0.72rem;
+      font-weight: 600;
+    }
+
+    /* User Prompt Section inside Card */
+    .user-section {
+      background: var(--user-section-bg);
+      border-bottom: 1px solid rgba(59, 130, 246, 0.2);
+      padding: 18px 20px;
+    }
+
+    .section-title-user {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #60a5fa;
+      font-weight: 700;
+      font-size: 0.85rem;
+      margin-bottom: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    /* Agent Response Section inside Card */
+    .agent-section {
+      background: var(--agent-section-bg);
+      padding: 18px 20px;
+    }
+
+    .section-title-agent {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #34d399;
+      font-weight: 700;
+      font-size: 0.85rem;
+      margin-bottom: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    /* Content styling */
+    .markdown-content {
+      line-height: 1.6;
+      font-size: 0.95rem;
+      color: #e2e8f0;
+      word-wrap: break-word;
+    }
+
+    .markdown-content p { margin-bottom: 12px; }
+    .markdown-content p:last-child { margin-bottom: 0; }
+    .markdown-content h1, .markdown-content h2, .markdown-content h3 {
+      color: #ffffff;
+      margin: 16px 0 10px 0;
+    }
+    .markdown-content ul, .markdown-content ol {
+      margin: 8px 0 12px 24px;
+    }
+    .markdown-content li { margin-bottom: 4px; }
+
+    /* Code Blocks */
+    pre[class*="language-"] {
+      border-radius: 8px !important;
+      margin: 12px 0 !important;
+      background: #090d16 !important;
+      border: 1px solid rgba(255, 255, 255, 0.1) !important;
+      position: relative;
+    }
+
+    code[class*="language-"] {
+      font-family: 'Fira Code', monospace !important;
+      font-size: 0.86rem !important;
+    }
+
+    :not(pre) > code {
+      background: rgba(30, 41, 59, 0.9);
+      color: #38bdf8;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: 'Fira Code', monospace;
+      font-size: 0.85rem;
+    }
+
+    .copy-btn {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: rgba(30, 41, 59, 0.8);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: var(--text-muted);
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      cursor: pointer;
+    }
+
+    .copy-btn:hover { background: #3b82f6; color: #fff; }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-muted);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navbar -->
+  <header>
+    <div class="brand">
+      <div class="brand-icon">TL</div>
+      <div class="brand-title">Bangkok Bank AI Transcript Viewer</div>
+    </div>
+
+    <div class="header-right">
+      <!-- Navbar Available Logs Dropdown -->
+      <div class="log-dropdown-container">
+        <span class="log-dropdown-label">Log File:</span>
+        <select id="logSelect" class="log-select">
+          <!-- Dynamically populated -->
+        </select>
+      </div>
+
+      <button class="btn-open-file" onclick="document.getElementById('fileInput').click()">
+        📁 Open .log File
+      </button>
+      <input type="file" id="fileInput" accept=".log,.txt">
+    </div>
+  </header>
+
+  <!-- Main View -->
+  <main>
+    <!-- Session Summary Header Bar -->
+    <div class="session-summary-bar" id="sessionSummaryBar">
+      <div class="summary-item">
+        <span class="summary-label">Log Date:</span>
+        <span class="summary-value" id="summaryDate">Loading...</span>
+      </div>
+      <div class="summary-item">
+        <span class="summary-label">Agent Model:</span>
+        <span class="summary-value" id="summaryModel">Loading...</span>
+      </div>
+      <div class="summary-item">
+        <span class="summary-label">Format:</span>
+        <span class="summary-value">Plain Text Log (.log)</span>
+      </div>
+    </div>
+
+    <!-- Container for Conversation Turns -->
+    <div id="turnsContainer" style="display: flex; flex-direction: column; gap: 24px;">
+      <!-- Dynamically generated turn cards -->
+    </div>
+  </main>
+
+  <script>
+    // Store user manually opened files dynamically in memory
+    const customOpenedFiles = {};
+
+    document.addEventListener('DOMContentLoaded', () => {
+      initLogDropdown();
+
+      const select = document.getElementById('logSelect');
+      if (select.options.length > 0) {
+        loadLog(select.value);
+      }
+
+      select.addEventListener('change', (e) => {
+        loadLog(e.target.value);
+      });
+
+      // Handle "Open .log File" picker
+      document.getElementById('fileInput').addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (evt) => {
+          const content = evt.target.result;
+          
+          // Save in memory cache
+          customOpenedFiles[file.name] = content;
+
+          // Check if file is already in the <select> dropdown
+          const selectEl = document.getElementById('logSelect');
+          let optionExists = false;
+          for (let i = 0; i < selectEl.options.length; i++) {
+            if (selectEl.options[i].value === file.name) {
+              optionExists = true;
+              break;
+            }
+          }
+
+          // If option doesn't exist, add it to the dropdown
+          if (!optionExists) {
+            const opt = document.createElement('option');
+            opt.value = file.name;
+            opt.textContent = file.name;
+            selectEl.appendChild(opt);
+          }
+
+          // Automatically switch dropdown selection to the opened file!
+          selectEl.value = file.name;
+
+          // Immediately parse and display the opened log
+          parseAndDisplayLog(file.name, content);
+        };
+        reader.readAsText(file);
+      });
+    });
+
+    function initLogDropdown() {
+      const select = document.getElementById('logSelect');
+      select.innerHTML = '';
+
+      let filenames = [];
+      if (window.EMBEDDED_TRANSCRIPTS) {
+        filenames = Object.keys(window.EMBEDDED_TRANSCRIPTS);
+      }
+
+      if (filenames.length === 0) {
+        filenames = ['2026-07-27_Gemini3.6Flash.log', '2026-07-26_Gemini3.6Flash.log'];
+      }
+
+      // Sort filenames descending by date/name (latest first)
+      filenames.sort().reverse();
+
+      filenames.forEach(filename => {
+        const opt = document.createElement('option');
+        opt.value = filename;
+        opt.textContent = filename;
+        select.appendChild(opt);
+      });
+    }
+
+    async function loadLog(filename) {
+      // 1. Check custom user opened files
+      if (customOpenedFiles[filename]) {
+        parseAndDisplayLog(filename, customOpenedFiles[filename]);
+        return;
+      }
+
+      // 2. Check window.EMBEDDED_TRANSCRIPTS (Zero CORS error on file://)
+      if (window.EMBEDDED_TRANSCRIPTS && window.EMBEDDED_TRANSCRIPTS[filename]) {
+        parseAndDisplayLog(filename, window.EMBEDDED_TRANSCRIPTS[filename]);
+        return;
+      }
+
+      // 3. Fallback to HTTP Fetch if running on a web server
+      try {
+        const res = await fetch(filename);
+        if (!res.ok) throw new Error('HTTP Fetch failed');
+        const text = await res.text();
+        parseAndDisplayLog(filename, text);
+      } catch (err) {
+        console.warn('Cannot fetch file via HTTP (file:// CORS restriction active). Use file picker button.', err);
+      }
+    }
+
+    /**
+     * ROBUST LOG PARSER WITH CODE FENCE TRACKING
+     */
+    function parseAndDisplayLog(filename, rawText) {
+      const lines = rawText.split(/\r?\n/);
+      let sessionDate = '2026-07-27';
+      let sessionModel = 'Gemini 3.6 Flash (High)';
+      let turns = [];
+
+      let currentTimestamp = '';
+      let userLines = [];
+      let agentLines = [];
+
+      let state = 0; // 0: IDLE, 1: USER_REPORT, 2: AGENT_RESPONSE
+      let inCodeFence = false;
+
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        const trimmed = line.trim();
+
+        if (trimmed.startsWith('```')) {
+          inCodeFence = !inCodeFence;
+        }
+
+        if (!inCodeFence) {
+          if (trimmed.startsWith('SESSION LOG:')) {
+            const parts = trimmed.split('|');
+            if (parts[0]) sessionDate = parts[0].replace('SESSION LOG:', '').trim();
+            if (parts[1]) sessionModel = parts[1].replace('MODEL', '').trim();
+            continue;
+          }
+
+          const tsMatch = trimmed.match(/^\[TIMESTAMP:\s*([^\]]+)\]/);
+          if (tsMatch) {
+            if (userLines.length > 0 || agentLines.length > 0) {
+              turns.push({
+                timestamp: currentTimestamp,
+                userPrompt: userLines.join('\n').trim(),
+                agentResponse: agentLines.join('\n').trim()
+              });
+              userLines = [];
+              agentLines = [];
+            }
+            currentTimestamp = tsMatch[1].trim();
+            state = 0;
+            continue;
+          }
+
+          if (trimmed === '--- USER REPORT ---' || trimmed === '--- USER PROMPT ---') {
+            state = 1;
+            continue;
+          }
+
+          if (trimmed === '--- AGENT RESPONSE ---') {
+            state = 2;
+            continue;
+          }
+
+          if (trimmed === '=========================================') {
+            if (state === 2) {
+              turns.push({
+                timestamp: currentTimestamp,
+                userPrompt: userLines.join('\n').trim(),
+                agentResponse: agentLines.join('\n').trim()
+              });
+              userLines = [];
+              agentLines = [];
+              currentTimestamp = '';
+              state = 0;
+              continue;
+            }
+          }
+        }
+
+        if (state === 1) {
+          userLines.push(line);
+        } else if (state === 2) {
+          agentLines.push(line);
+        }
+      }
+
+      if (userLines.length > 0 || agentLines.length > 0) {
+        turns.push({
+          timestamp: currentTimestamp,
+          userPrompt: userLines.join('\n').trim(),
+          agentResponse: agentLines.join('\n').trim()
+        });
+      }
+
+      document.getElementById('summaryDate').textContent = sessionDate;
+      document.getElementById('summaryModel').textContent = sessionModel;
+
+      renderTurnCards(turns);
+    }
+
+    function renderTurnCards(turns) {
+      const container = document.getElementById('turnsContainer');
+      container.innerHTML = '';
+
+      if (turns.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <h3>No conversation logs available in this file.</h3>
+          </div>
+        `;
+        return;
+      }
+
+      turns.forEach((turn, idx) => {
+        const card = document.createElement('div');
+        card.className = 'turn-card';
+
+        const header = document.createElement('div');
+        header.className = 'turn-card-header';
+        header.innerHTML = `
+          <span>TURN #${idx + 1} &bull; TIMESTAMP: ${escapeHtml(turn.timestamp || 'N/A')}</span>
+          <span class="turn-status-badge">OK</span>
+        `;
+        card.appendChild(header);
+
+        if (turn.userPrompt) {
+          const userSec = document.createElement('div');
+          userSec.className = 'user-section';
+          userSec.innerHTML = `
+            <div class="section-title-user">💬 USER PROMPT</div>
+            <div class="markdown-content">${renderMarkdown(turn.userPrompt)}</div>
+          `;
+          card.appendChild(userSec);
+        }
+
+        if (turn.agentResponse) {
+          const agentSec = document.createElement('div');
+          agentSec.className = 'agent-section';
+          agentSec.innerHTML = `
+            <div class="section-title-agent">🤖 AGENT RESPONSE</div>
+            <div class="markdown-content">${renderMarkdown(turn.agentResponse)}</div>
+          `;
+          card.appendChild(agentSec);
+        }
+
+        container.appendChild(card);
+      });
+
+      if (window.Prism) {
+        Prism.highlightAllUnder(container);
+      }
+
+      addCopyButtons();
+    }
+
+    function renderMarkdown(text) {
+      if (window.marked) {
+        try {
+          return marked.parse(text);
+        } catch (e) {
+          return escapeHtml(text).replace(/\n/g, '<br>');
+        }
+      }
+      return escapeHtml(text).replace(/\n/g, '<br>');
+    }
+
+    function addCopyButtons() {
+      document.querySelectorAll('pre').forEach(pre => {
+        if (pre.querySelector('.copy-btn')) return;
+        const btn = document.createElement('button');
+        btn.className = 'copy-btn';
+        btn.textContent = 'Copy';
+        btn.onclick = () => {
+          const code = pre.querySelector('code') ? pre.querySelector('code').innerText : pre.innerText;
+          navigator.clipboard.writeText(code).then(() => {
+            btn.textContent = 'Copied!';
+            setTimeout(() => btn.textContent = 'Copy', 2000);
+          });
+        };
+        pre.appendChild(btn);
+      });
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return str
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+  </script>
+</body>
+</html>

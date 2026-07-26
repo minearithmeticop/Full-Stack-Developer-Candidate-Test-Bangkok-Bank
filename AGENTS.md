@@ -1,0 +1,55 @@
+# AGENTS.md - Agent Instructions & Commit Conventions
+
+เอกสารฉบับนี้ใช้สำหรับกำกับดูแลการทำงานของ AI Agent และ Sub-Agents ภายในโครงการ **Full-Stack Developer Candidate Test Bangkok Bank**
+
+---
+
+## 1. 📝 Git Commit Conventions
+
+ทุก Commit ภายใน Repository จะต้องปฏิบัติตามข้อกำหนดการเขียน Commit Message แบบ Conventional Commits ดังนี้:
+
+```text
+<type>(<scope>): <description>
+```
+
+### 1.1 Types (`<type>`)
+* `feat`: การเพิ่มฟีเจอร์ใหม่
+* `fix`: การแก้ไขบั๊กหรือข้อผิดพลาด
+* `docs`: การสร้างหรือปรับปรุงเอกสาร (เช่น README.md, AGENTS.md)
+* `test`: การเพิ่มหรือแก้ไขชุดทดสอบ (เช่น Supertest e2e tests)
+* `chore`: การปรับปรุงค่าคอนฟิกหรือไฟล์บิลด์
+* `refactor`: การปรับแต่งโครงสร้างโค้ดโดยไม่เปลี่ยนแปลงพฤติกรรม
+
+### 1.2 Scopes (`<scope>`)
+* `agent`: Audit Infrastructure, Sub-Agent Skills และ Transcripts Log
+* `frontend`: โค้ดส่วน Frontend (React 19+, Vite, MUI v9, Auth0 Client)
+* `backend`: โค้ดส่วน Backend (NestJS, Prisma ORM, Middleware, Guards)
+* `security`: ระบบความปลอดภัย, Tenant Verification และ Auth0 JWT Tokens
+* `api`: การออกแบบ API, Endpoints และ DTOs
+* `decisions`: เอกสารสรุปการตัดสินใจทางสถาปัตยกรรม (ADRs)
+
+### 1.3 ตัวอย่างการใช้งาน Commit Messages
+* `feat(agent): setup transcript-logger sub-agent and initial transcripts`
+* `docs(readme): update project structure and commit conventions`
+* `feat(backend): implement tenant-id guard and auth0 middleware`
+* `test(backend): add supertest e2e tests for tenant isolation`
+
+---
+
+## 2. ⚡ Pre-commit Verification Rule
+
+ก่อนทำการ `git commit` ทุกครั้ง Agent ต้องทำการทดสอบระบบก่อนเสมอ:
+1. ทำการทดสอบ Build และรัน NestJS E2E Test ด้วยคำสั่ง:
+   ```bash
+   cd backend && npm run test:e2e
+   ```
+2. หากคำสั่งดังกล่าวทำงานล้มเหลว ห้ามทำการ `git commit` โดยเด็ดขาด และต้องทำการแก้ไขข้อผิดพลาดให้ผ่าน 100% ก่อนเสมอ (ในกรณีที่ยังไม่มีโฟลเดอร์ backend ให้ยกเว้นขั้นตอนนี้)
+
+---
+
+## 3. 📜 Daily Transcript Logging Requirement
+
+1. Agent ต้องทำการบันทึกประวัติการสนทนาทุกครั้งที่มีการส่ง User Prompt และ Agent Response ลงในไฟล์ Text Log รายวันในโฟลเดอร์ `/transcripts`
+2. รูปแบบชื่อไฟล์: `/transcripts/YYYY-MM-DD_[AgentModel].log` (เช่น `/transcripts/2026-07-27_Gemini3.6Flash.log`)
+3. ใช้มาตรฐานเวลา ISO 8601 format: `YYYY-MM-DDTHH:mm:ss+07:00`
+4. อัปเดตข้อมูลไฟล์ `/transcripts/logs-data.js` เพื่อให้ `index.html` (Transcript Viewer) สามารถโหลดข้อมูลล่าสุดขึ้นมาแสดงผลได้โดยไม่ติดปัญหา CORS
