@@ -243,3 +243,15 @@ feat(agent): setup transcript-logger  sub-agent and initial transcripts
 2. `docs(readme): update project structure and commit conventions` (ส่วน README และ Commit Guidelines)
 
 =========================================
+
+[TIMESTAMP: 2026-07-27T03:17:50+07:00]
+--- USER REPORT ---
+ลบ file AGENT.md ด้วย เราไม่เข้าใจว่าทำไมนายถึงสร้าง ทั้ง AGENT.md และ AGENTS.md ด้วย
+ฝากอธิบายให้เราเข้าใจหน่อยนะ เราอยากเข้าใจในส่วนนี้
+
+--- AGENT RESPONSE ---
+สาเหตุที่สร้างทั้ง AGENTS.md และ AGENT.md ก่อนหน้านี้ เนื่องจากตามมาตรฐานระบบ AI Agent Framework จะตั้งชื่อไฟล์ข้อบังคับว่า `AGENTS.md` (พหูพจน์) ในขณะที่ Prompt มีการระบุชื่อ `AGENT.md` (เอกพจน์) จึงได้สร้างทั้งสองไฟล์ไว้เพื่อป้องกันความสับสน
+
+ปัจจุบันได้ทำการลบไฟล์ `AGENT.md` และคงไว้เฉพาะ `AGENTS.md` เป็นมาตรฐานหลักของโปรเจกต์ เรียบร้อยแล้ว พร้อมทั้งทำ git commit (`chore(agent): remove duplicate AGENT.md file`) และ push ขึ้น GitHub เรียบร้อยแล้วครับ
+
+=========================================
