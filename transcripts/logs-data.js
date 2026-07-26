@@ -93,7 +93,7 @@ SESSION LOG: 2026-07-27 | MODEL Gemini 3.6 Flash (High)
 --- USER REPORT ---
 เราได้ทดลองสร้าง log วันที่ 2026-07-26 ขึ้นมา เพื่อทดสอบ dropdown ของ Log File สามารถอ่านไฟล์ทั้งหมดที่เป็น .log ใน folder transcripts ได้หรือไม่ 
 
-สิ่งที่เกิดขึ้นคือ ไม่ได้ และแสดงเพียงวันที่ 2026-07-26 เท่านั้น
+สิ่งที่เกิดขึ้นคือ ไม่ได้ และแสดงเพียงวันที่ 2026-07-26 เท่า่นั้น
 
 **ปัญหาที่เกิดขึ้นทั้งหมด คือ**
 1. Log file ที่ Dropdown ไม่สามารถแสดงไฟล์ทั้งหมดที่เป็น .log ใน folder transcripts ได้
@@ -260,6 +260,24 @@ feat(agent): setup transcript-logger  sub-agent and initial transcripts
 ปัจจุบันได้ทำการลบไฟล์ \`AGENT.md\` และคงไว้เฉพาะ \`AGENTS.md\` เป็นมาตรฐานหลักของโปรเจกต์ เรียบร้อยแล้ว พร้อมทั้งทำ git commit (\`chore(agent): remove duplicate AGENT.md file\`) และ push ขึ้น GitHub เรียบร้อยแล้วครับ
 
 =========================================
+
+[TIMESTAMP: 2026-07-27T03:34:00+07:00]
+--- USER REPORT ---
+แก้ไขไฟล์ AGENTS.md
+เพื่อเพิ่ม strict guardrails 
+pre-commit 
+1. ใช้ npx lint-staged เสมอ รวมถึง eslint --fix และ prettier --write
+2. ใช้ npm run type-check และ npm run test:e2e
+ถ้าหาก failed ต้องไม่เกิดการ commit
+
+AI Agent Self-Correction & Recovery
+1. อ่าน full log ที่เกิดขึ้น: inspect อย่างละเอียดว่าเกิดอะไรขึ้น และเกิดจากอะไร
+2. แก้ไข logic ที่ผิดพลาด อย่า comment code หรือ ปิดการใช้งานกฎ เช่น ESLint ที่ใช้ eslint-disable และไม่ wrap failed function ด้วย empty try/catch
+
+--- AGENT RESPONSE ---
+ดำเนินการแก้ไขไฟล์ \`AGENTS.md\` เรียบร้อยแล้ว โดยเพิ่มหัวข้อ 2. Strict Pre-commit Verification Guardrails (ครอบคลุม npx lint-staged, eslint --fix, prettier --write, npm run type-check, npm run test:e2e และห้าม commit หากเกิดความผิดพลาด 100%) รวมถึงเพิ่มหัวข้อ 3. AI Agent Self-Correction & Recovery Protocol (การวิเคราะห์ Full error log เพื่อหาสาเหตุที่แท้จริง และห้ามคอมเมนต์โค้ดทิ้ง ห้ามใช้ eslint-disable/@ts-ignore หรือครอบ empty try/catch)
+
+=========================================
 `,
 
   "2026-07-26_Gemini3.6Flash.log": `=========================================
@@ -271,7 +289,7 @@ SESSION LOG: 2026-07-26 | MODEL Gemini 3.6 Flash (High)
 ผลลัพธ์ที่เกิดขึ้นคลาดเคลื่อนจากที่ต้องการ
 การเขียน sub-agent skills เขียนได้แย่มาก เราได้ลงรายละเอียดไปแล้วว่าควรจะเขียนอย่างไร แต่สิ่งที่เกิดขึ้นไม่เป็นไปตามนั้น แต่ไม่เป็นไร ถ้าหากใช้ได้ก็ถือว่าโอเค เดี๋ยวได้ทดสอบกัน
 
-ส่วนสิ่งที่ต้องการแก้ไขจริงๆ และ urgent มากคือไฟล์ html 
+ส่วนสิ่งที่ต้องการแก้ไขจริงๆ และ urgentมากคือไฟล์ html 
 ปัญหาที่เจออย่างแรกคือ UI Available Logs เราคาดหวังให้แสดงเป็น dropdown อยู่บน navbar ให้เลือก เพื่อความสะดวก การนำมาแสดงใน drawer มันค่อนข้างเปลืองพื้นที่ และไม่สวยงาม
 
 ปัญหาที่เจออย่างสองคือ Log ไม่แสดง จำเป็นต้องกดปุ่มเลือก Open .log File ทุกครั้งเพื่อให้แสดง log

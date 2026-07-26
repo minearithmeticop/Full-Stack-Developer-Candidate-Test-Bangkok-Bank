@@ -36,18 +36,35 @@
 
 ---
 
-## 2. ⚡ Pre-commit Verification Rule
+## 2. 🛡️ Strict Pre-commit Verification Guardrails
 
-ก่อนทำการ `git commit` ทุกครั้ง Agent ต้องทำการทดสอบระบบก่อนเสมอ:
-1. ทำการทดสอบ Build และรัน NestJS E2E Test ด้วยคำสั่ง:
-   ```bash
-   cd backend && npm run test:e2e
-   ```
-2. หากคำสั่งดังกล่าวทำงานล้มเหลว ห้ามทำการ `git commit` โดยเด็ดขาด และต้องทำการแก้ไขข้อผิดพลาดให้ผ่าน 100% ก่อนเสมอ (ในกรณีที่ยังไม่มีโฟลเดอร์ backend ให้ยกเว้นขั้นตอนนี้)
+ก่อนทำการ `git commit` ทุกครั้ง Agent ต้องทำการทดสอบและตรวจสอบความถูกต้องของโค้ดล่วงหน้า (Pre-commit Verification) เสมอ:
+
+1. **Linting & Formatting**:
+   - เรียกใช้ `npx lint-staged` รวมถึงการทำ `eslint --fix` และ `prettier --write` กับไฟล์ที่ถูกแก้ไข
+2. **Type Checking & E2E Testing**:
+   - รันการตรวจสอบ Type ด้วยคำสั่ง `npm run type-check`
+   - รันชุดทดสอบ E2E ด้วยคำสั่ง `npm run test:e2e` (ในโฟลเดอร์ backend)
+3. **Strict Enforcement**:
+   - หากขั้นตอนใดขั้นตอนหนึ่งข้างต้น **FAILED** ห้ามทำการ `git commit` โดยเด็ดขาด และต้องทำการแก้ไขข้อผิดพลาดให้ผ่าน 100% ก่อนเสมอ (ในกรณีที่โฟลเดอร์หรือสคริปต์ดังกล่าวยังไม่ถูกสร้างในระยะเริ่มต้น ให้ยกเว้นเฉพาะส่วนที่ยังไม่มี)
 
 ---
 
-## 3. 📜 Daily Transcript Logging Requirement
+## 3. 🛠️ AI Agent Self-Correction & Recovery Protocol
+
+เมื่อเกิดข้อผิดพลาดในการบิลด์, การรัน Test, Linting หรือ Runtime AI Agent ต้องปฏิบัติตามแนวทางการแก้ไขปัญหาดังนี้:
+
+1. **Inspect Full Error Logs**:
+   - ตรวจสอบและอ่าน Error Log ฉบับเต็มอย่างละเอียดเสมอ เพื่อวิเคราะห์สาเหตุที่แท้จริง (Root Cause) ว่าเกิดจากจุดใดและเพราะเหตุใด
+2. **Fix Underlying Logic (No Superficial Fixes)**:
+   - แก้ไขที่ตรรกะของโค้ด (Logic) ให้ถูกต้องตามข้อกำหนดที่แท้จริง
+   - **ห้าม** แก้ปัญหาแบบฉาบฉวยโดยการคอมเมนต์โค้ดทิ้ง (Comment out broken code)
+   - **ห้าม** ปิดการใช้งานกฎ Linter/Compiler เช่น การใส่ `eslint-disable` หรือ `@ts-ignore` เพื่อหลบหลีกการตรวจจับ
+   - **ห้าม** ครอบโค้ดที่ทำงานล้มเหลวด้วย `try/catch` ว่างเปล่า (Empty catch blocks) หรือ swallowing exceptions
+
+---
+
+## 4. 📜 Daily Transcript Logging Requirement
 
 1. Agent ต้องทำการบันทึกประวัติการสนทนาทุกครั้งที่มีการส่ง User Prompt และ Agent Response ลงในไฟล์ Text Log รายวันในโฟลเดอร์ `/transcripts`
 2. รูปแบบชื่อไฟล์: `/transcripts/YYYY-MM-DD_[AgentModel].log` (เช่น `/transcripts/2026-07-27_Gemini3.6Flash.log`)
