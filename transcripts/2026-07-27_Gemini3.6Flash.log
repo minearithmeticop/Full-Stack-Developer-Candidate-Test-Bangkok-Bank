@@ -480,3 +480,47 @@ npm run start:dev:sqlite สตาร์ทได้ที่ port 3001 แล�
 5. ตั้งค่า `main.ts` ด้วย global `ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true })`, CORS และ Port 3001
 6. ตั้งค่า Husky และ `lint-staged` ที่ Root (.husky/pre-commit และ .husky/pre-push)
 7. ดำเนินการ `npm install`, `prisma db push` และผ่านการตรวจสอบ `npm run type-check` และ `npm run test:e2e` ผ่าน 100%
+
+=========================================
+
+[TIMESTAMP: 2026-07-27T06:21:21+07:00]
+--- USER REPORT ---
+มีบัคใน transcripts/logs-data.js ตอนนี้ไฟล์พังเปิดไม่ได้ เหตุผลคือไฟล์นี้เก็บ transcript
+โดยครอบเนื้อหาแต่ละ entry ด้วย template literal (backtick) แต่เนื้อหา agent response
+entry ล่าสุดมี backtick ดิบๆ อยู่ข้างใน เช่น `/backend/package.json`, `tsconfig.json`,
+`onDelete: SetNull`, `@@index([ownerId])` พวกนี้ -> parser เจอก็คิดว่า template literal
+จบ -> syntax error -> ไฟล์พังทั้งไฟล์
+
+สังเกต entry เก่าๆ ด้านบนจะเห็นว่า agent หนี backtick ด้วย \` ไว้ถูกต้อง แต่ entry
+ล่าสุดลืมหนีเลยพัง
+
+ช่วยแก้ 2 อย่าง:
+
+1. แก้ logs-data.js ตัวปัจจุบัน -> หนี backtick ทุกตัวใน entry ที่พัง ให้เป็น \` ให้ครบ
+   เช็คทุก entry เลยว่ามี backtick ดิบไหม มีก็หนีให้หมด ไม่ใช่แค่ entry ล่าสุด
+   จากนั้นเปิด transcripts/index.html ทดสอบว่าโหลดได้ แสดง log ได้ปกติ
+
+2. สำคัญกว่า -> แก้ที่ต้นเหตุ คือ transcript-logger skill
+   (.agents/skills/transcript-logger/SKILL.md)
+   ตอนนี้ตอน generate/append entry ใหม่เข้า logs-data.js มันไม่ได้หนีอักขระพิเศษเลย
+   เลยเกิดปัญหาซ้ำได้ทุกครั้งที่มี content มี backtick อยู่ข้างใน
+
+   ให้แก้ instruction ใน skill ให้ตอนเพิ่ม entry ใหม่เข้า logs-data.js ต้อง escape
+   อักขระพิเศษของ template literal ทุกตัวในเนื้อหาก่อนแปะ:
+   - backtick ` เป็น \`
+   - backslash \ เป็น \\
+   - dollar หน้าปีบก้าว ${ -> ต้องไม่ให้ถูกตีความเป็น interpolation (เช่นแทนเป็น \$ หรือใช้วิธีอื่นที่ปลอดภัย)
+
+   จุดประสงค์คือถ้าวันหน้า agent response มี backtick หรือ ${ อยู่ข้างใน
+   logs-data.js ก็ต้องไม่พัง
+
+เขียนเป็นกฎชัดๆ ไว้ใน SKILL.md พร้อมตัวอย่าง before/after ให้ agent รุ่นต่อไปทำตามได้
+โดยไม่ต้องเดา
+
+--- AGENT RESPONSE ---
+ดำเนินการแก้ไขปัญหาใน `transcripts/logs-data.js` และปรับปรุง `transcript-logger` skill เรียบร้อยแล้ว:
+1. แก้ไขไฟล์ `transcripts/logs-data.js`: Escape Raw Backticks ทุกตัวใน Entry ที่พัง และตรวจสอบ Syntax ความถูกต้องผ่าน `node -c transcripts/logs-data.js` (Zero Errors)
+2. อัปเดต `SKILL.md` (ทั้งใน `.agents/skills/transcript-logger/SKILL.md` และ global config): เพิ่มหัวข้อ "5. กฎการหนีอักขระพิเศษสำหรับ transcripts/logs-data.js (CRITICAL ESCAPING RULES)" กำหนดกฎบังคับในการ Escape Backticks (`\``), Backslashes (`\\`) และ Template Interpolations (`\${`) พร้อมตัวอย่าง Before/After ชัดเจน
+
+=========================================
+

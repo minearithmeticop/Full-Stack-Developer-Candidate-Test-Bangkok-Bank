@@ -50,7 +50,7 @@ SESSION LOG: YYYY-MM-DD | MODEL [AgentModel]
 
 ---
 
-## 3. ระบบอ่านไฟล์บันทึก HTML Viewer (`/transcripts/index.html`)
+## 3. ระบบอ่านไฟล์บันทึก HTML Viewer (`/transcripts/index.html`) & Embedded Data (`/transcripts/logs-data.js`)
 
 หน้าเว็บอ่าน Log ถูกสร้างขึ้นมาให้อ่านไฟล์ `.log` ได้อย่างสวยงาม เสมือนอยู่ใน Chat Application โดยมีคุณสมบัติดังนี้:
 
@@ -71,11 +71,60 @@ SESSION LOG: YYYY-MM-DD | MODEL [AgentModel]
 
 ---
 
-## 4. ข้อบังคับ Pre-commit Verification Rule
+## 4. กฎการหนีอักขระพิเศษสำหรับ `transcripts/logs-data.js` (CRITICAL ESCAPING RULES)
+
+เนื่องจากไฟล์ `logs-data.js` จัดเก็บเนื้อหา Log ไว้ในตัวแปร JavaScript Template Literal (`window.EMBEDDED_TRANSCRIPTS["..."] = \`...\``) ทุกครั้งที่ Agent ทำการสร้างหรือต่อเติมเนื้อหาลงใน `logs-data.js` **ต้องทำการ Escape อักขระพิเศษทุกตัวต่อไปนี้ก่อนแปะลงไฟล์เสมอ** เพื่อป้องกันปัญหา JavaScript SyntaxError ที่จะทำให้ไฟล์พังทั้งไฟล์:
+
+### ⚠️ กฎการ Escape อักขระ 3 ข้อบังคับเด็ดขาด:
+1. **Backtick (`` ` ``)**: ต้องเปลี่ยนเป็น `\` ` เสมอ (เพื่อไม่ให้หลุดขอบเขต Template Literal)
+2. **Backslash (`\`)**: ต้องเปลี่ยนเป็น `\\` เสมอ
+3. **Template Interpolation (`${`)**: ต้องเปลี่ยนเป็น `\${` เสมอ (เพื่อไม่ให้ JS ประมวลผลเป็น Variable Interpolation)
+
+---
+
+### 💡 ตัวอย่าง Before / After ในการ Escape ข้อมูลสำหรับ `logs-data.js`:
+
+#### ตัวอย่างที่ 1: การ Escape Backticks ในข้อความคำอธิบายหรือชื่อไฟล์
+- **ข้อความต้นฉบับ (Raw Agent Response)**:
+  ```text
+  สร้างไฟล์ `/backend/package.json` และ `tsconfig.json` เรียบร้อย
+  ```
+- **ข้อความหลังจาก Escape สำหรับแปะใน `logs-data.js`**:
+  ```javascript
+  สร้างไฟล์ \`/backend/package.json\` และ \`tsconfig.json\` เรียบร้อย
+  ```
+
+#### ตัวอย่างที่ 2: การ Escape `${}` Interpolation และ Backticks ในบล็อกโค้ด
+- **ข้อความต้นฉบับ (Raw Agent Response)**:
+  ```text
+  กำหนดพอร์ตผ่าน `${PORT}` ในไฟล์ `main.ts`
+  ```
+- **ข้อความหลังจาก Escape สำหรับแปะใน `logs-data.js`**:
+  ```javascript
+  กำหนดพอร์ตผ่าน \${PORT} ในไฟล์ \`main.ts\`
+  ```
+
+#### ตัวอย่างที่ 3: การ Escape Backslash ใน Path
+- **ข้อความต้นฉบับ (Raw Agent Response)**:
+  ```text
+  ไฟล์อยู่ที่ `C:\Users\usEr\project`
+  ```
+- **ข้อความหลังจาก Escape สำหรับแปะใน `logs-data.js`**:
+  ```javascript
+  ไฟล์อยู่ที่ \`C:\\Users\\usEr\\project\`
+  ```
+
+---
+
+## 5. ข้อบังคับ Pre-commit Verification Rule
 
 ก่อนทำการ `git commit` ทุกครั้ง Agent ต้องปฏิบัติตามขั้นตอน ดังนี้:
-1. ทำการทดสอบ Build และรัน NestJS E2E Test ด้วยคำสั่ง:
+1. ตรวจสอบ Syntax ของไฟล์ JavaScript ด้วยคำสั่ง:
+   ```bash
+   node -c transcripts/logs-data.js
+   ```
+2. ทำการทดสอบ Build และรัน NestJS E2E Test ด้วยคำสั่ง:
    ```bash
    cd backend && npm run test:e2e
    ```
-2. หากการรัน E2E Test ล้มเหลว ห้ามทำการ `git commit` โดยเด็ดขาด และต้องทำการแก้ไขข้อผิดพลาดให้ผ่าน 100% ก่อนเสมอ
+3. หากขั้นตอนใดขั้นตอนหนึ่งล้มเหลว ห้ามทำการ `git commit` โดยเด็ดขาด และต้องทำการแก้ไขข้อผิดพลาดให้ผ่าน 100% ก่อนเสมอ
