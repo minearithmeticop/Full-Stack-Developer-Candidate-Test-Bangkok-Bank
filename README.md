@@ -227,13 +227,24 @@ cd frontend
 npm run dev
 ```
 
-#### 4. รันชุดทดสอบ E2E Tests
+#### 4. สร้างข้อมูลทดสอบเริ่มต้น (Seed Data)
 ```bash
 cd backend
+
+# รันคำสั่ง Seed Data สำหรับเติมข้อมูล User A (auth0|userA) และ User B (auth0|userB)
+npm run seed
+```
+
+#### 5. รันชุดทดสอบ E2E Tests & Multi-Tenant Data Isolation
+```bash
+cd backend
+
+# รันชุดทดสอบ E2E (Security Boundary & Data Isolation Matrix)
 npm run test:e2e
 ```
 
 ---
+
 
 ## 📝 Git Commit Conventions
 

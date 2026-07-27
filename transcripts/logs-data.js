@@ -595,6 +595,73 @@ entry ล่าสุดมี backtick ดิบๆ อยู่ข้างใ
 
 =========================================
 
+[TIMESTAMP: 2026-07-27T08:11:59+07:00]
+--- USER REPORT ---
+เราลืมทำ seed data ตั้งแต่ตอน scaffold ตอนนี้ backend logic เสร็จหมดแล้วแต่ยังไม่มีข้อมูลทดสอบ
+อยากทำครบทั้ง seed data และ e2e test ในขั้นนี้เลย เพราะพอมีข้อมูล 2 users ก็ทดสอบ
+multi-tenant isolation ได้เลย จะได้เห็นปัญหาทั้งหมดทีเดียว
+
+อ่าน prisma/schema.sqlite.prisma, AGENTS.md (Invariant 1), API_DESIGN.md (ส่วน Security
+Test Matrix) ก่อน
+
+## ส่วนที่ 1: Seed Data
+
+1. สร้าง backend/prisma/seed.ts
+   - ใช้ upsert ไม่ใช่ deleteMany แล้ว create เพราะจะทำให้ id เปลี่ยนทุกครั้ง
+   - user A (auth0|userA): 2 collections + 3 bookmarks (1 ใน collection, 1 ในอีก collection, 1 uncategorized)
+   - user B (auth0|userB): 1 collection + 1 bookmark
+   - ใช้ id ที่ fix ไว้เพื่อให้ reproducible และ e2e test อ้างอิงได้
+   - export function ที่ทำ seeding ออกมาด้วย เพื่อให้ e2e test import ไปใช้ใน beforeAll ได้
+
+2. เพิ่ม script ใน backend/package.json:
+   - "seed": "ts-node prisma/seed.ts"
+   - "prisma": { "seed": "ts-node prisma/seed.ts" }
+
+## ส่วนที่ 2: E2E Multi-Tenant Tests
+
+อ่าน test/app.e2e-spec.ts ที่มีอยู่ก่อน ตอนนี้มีแค่ negative case (no token -> 401)
+ต้องเพิ่ม positive case ที่ทดสอบ multi-tenant isolation จริง
+
+3. สร้าง test/security/data-isolation.e2e-spec.ts ตาม Security Test Matrix ใน API_DESIGN.md
+   สำหรับ auth ใน e2e ใช้ overrideGuard ก็พอ
+   ถอด sub จาก token มาเป็น ownerId
+
+   test cases ตาม matrix:
+   - ST-01: user A GET bookmark ของ A -> 200
+   - ST-02: user B GET bookmark ของ A -> 404
+   - ST-03: user B PUT bookmark ของ A -> 404
+   - ST-04: user B DELETE bookmark ของ A -> 404
+   - ST-60: user B GET collection ของ A/bookmarks -> 404
+   - ST-06: user A POST bookmark พร้อม override ownerId -> 201 และ ownerId ใน DB
+     เป็น sub ของ token ไม่ใช่ค่าจาก payload
+   - เพิ่ม: DELETE collection แล้ว bookmark ยังอยู่ collectionId=null (ทดสอบ onDelete SetNull)
+   - เพิ่ม: POST bookmark มี field นอก DTO -> 400
+   - ใช้ DB แยกสำหรับ test หรือ seed ใหม่ใน beforeAll
+
+   หมายเหตุเรื่อง route prefix: ตอนนี้ใช้ /api/v1/ เช็คกับ API_DESIGN.md ก่อนว่ามันระบุ
+   prefix นี้ไหม ถ้าไม่ระบุก็เลือกเองแล้ว document ไว้ใน API_DESIGN.md ให้ชัด
+
+## ทดสอบ
+
+- cd backend && npm run seed รันผ่าน
+- cd backend && npm run test:e2e ผ่านทุก test 100%
+- npm run type-check ผ่าน
+- ไม่มี .skip หรือ pending test
+
+อัปเดต README.md ด้วย: หัวข้อ Seed Data และ E2E Tests
+
+--- AGENT RESPONSE ---
+ดำเนินการสร้าง Seed Data และชุดทดสอบ E2E Multi-Tenant Data Isolation & Security Matrix เรียบร้อยแล้ว:
+1. สร้าง \`backend/prisma/seed.ts\`: กำหนดข้อมูลตั้งต้นของ User A (\`auth0|userA\`) มี 2 Collections + 3 Bookmarks และ User B (\`auth0|userB\`) มี 1 Collection + 1 Bookmark โดยใช้ \`upsert\` ด้วย Fixed IDs เพื่อให้ Reproducible และ Export \`seed()\` function สำหรับ E2E Tests
+2. เพิ่ม Scripts ใน \`backend/package.json\`: \`"seed": "ts-node prisma/seed.ts"\` และ \`"prisma": { "seed": "ts-node prisma/seed.ts" }\`
+3. สร้าง \`test/security/data-isolation.e2e-spec.ts\`: ทดสอบ Multi-Tenant Isolation (ST-01 ถึง ST-06 & ST-60), นโยบาย SetNull (ADR-004) เมื่อลบ Collection และ DTO Validation Guardrail (400 Bad Request เมื่อส่ง Field นอก DTO)
+4. อัปเดต \`CreateBookmarkDto\` และ \`CreateCollectionDto\`: รองรับ optional \`ownerId?: string\` เพื่อให้ Server Token เคว้นสิทธิ์ทับ Payload Injection (ST-06)
+5. ผ่านการทดสอบ \`npm run seed\`, \`npm run type-check\`, และ \`npm run test:e2e\` ผ่าน 100% (2 Test Suites, 12 Passed, 0 Failed)
+6. อัปเดต \`README.md\`: เพิ่มขั้นตอนการรัน Seed Data และ E2E Testing Guide
+
+=========================================
+
+
 
 `,
 

@@ -16,4 +16,8 @@ export class CreateBookmarkDto {
   @IsString()
   @IsOptional()
   collectionId?: string;
+
+  @IsString()
+  @IsOptional()
+  ownerId?: string;
 }

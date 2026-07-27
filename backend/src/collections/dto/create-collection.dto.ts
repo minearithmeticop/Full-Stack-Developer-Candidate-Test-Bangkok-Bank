@@ -8,4 +8,8 @@ export class CreateCollectionDto {
   @IsString()
   @IsOptional()
   description?: string;
+
+  @IsString()
+  @IsOptional()
+  ownerId?: string;
 }
