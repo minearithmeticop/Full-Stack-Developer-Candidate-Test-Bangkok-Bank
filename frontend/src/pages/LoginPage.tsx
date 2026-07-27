@@ -9,9 +9,14 @@ import {
   Typography,
 } from '@mui/material';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
+import { Navigate } from 'react-router-dom';
 
 export const LoginPage: React.FC = () => {
-  const { loginWithRedirect } = useAuth0();
+  const { isAuthenticated, isLoading, loginWithRedirect } = useAuth0();
+
+  if (!isLoading && isAuthenticated) {
+    return <Navigate to="/collections" replace />;
+  }
 
   return (
     <Container maxWidth="xs" sx={{ mt: 12 }}>

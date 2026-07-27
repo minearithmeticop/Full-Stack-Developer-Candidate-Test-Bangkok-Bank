@@ -5,8 +5,7 @@ import { Navigate, Outlet } from 'react-router-dom';
 import { setAuthTokenGetter } from '../api/client';
 
 export const ProtectedRoute: React.FC = () => {
-  const { isAuthenticated, isLoading, loginWithRedirect, getAccessTokenSilently } =
-    useAuth0();
+  const { isAuthenticated, isLoading, getAccessTokenSilently } = useAuth0();
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -35,8 +34,6 @@ export const ProtectedRoute: React.FC = () => {
   }
 
   if (!isAuthenticated) {
-    // If not authenticated, redirect to login page or trigger Auth0 login flow
-    loginWithRedirect();
     return <Navigate to="/login" replace />;
   }
 

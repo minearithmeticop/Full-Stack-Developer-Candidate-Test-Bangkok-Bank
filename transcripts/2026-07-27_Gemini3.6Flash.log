@@ -742,3 +742,76 @@ npm run dev สตาร์ทที่ http://localhost:3000 ได้, npm run
 
 =========================================
 
+[TIMESTAMP: 2026-07-27T09:12:59+07:00]
+--- USER REPORT ---
+ตอนนี้ frontend scaffold เสร็จแล้ว ขั้นนี้ implement logic จริงใน pages และ hooks
+อ่าน API_DESIGN.md (endpoints ทั้งหมด), DECISIONS.md (ADR เรื่อง TanStack Query) ก่อน
+
+## 1. Hooks (src/hooks/)
+- useCollections.ts: useQuery GET /collections, useMutation create/update/delete
+  invalidate ['collections'] หลัง mutation (delete ต้อง invalidate ['bookmarks'] ด้วย
+  เพราะ onDelete SetNull เปลี่ยน collectionId)
+- useBookmarks.ts: useQuery GET /bookmarks รองรับ filter collectionId + uncategorized,
+  useMutation create/update/delete, invalidate ['bookmarks']
+- ใช้ axios client จาก src/api/client.ts
+- ทุก hook มี explicit TypeScript types
+
+## 2. Pages (src/pages/)
+- CollectionsPage.tsx: list collections, ปุ่ม New Collection (Dialog), edit/delete
+  (Confirm Dialog), คลิก collection -> navigate /collections/:id
+- BookmarksPage.tsx: รองรับ 2 mode ผ่าน useParams/useSearchParams:
+  (a) /bookmarks -> all bookmarks (filter uncategorized ได้)
+  (b) /collections/:id -> bookmarks ใน collection นั้น
+  list bookmarks แสดง title, url (link), notes, collection name (ถ้ามี)
+  ปุ่ม Add Bookmark -> Dialog URL/Title/Notes/Collection select
+  ใช้ normalizeUrl ก่อน submit (ถ้า user พิมพ์ www.google.com ให้ prepend https://)
+  edit/delete พร้อม confirm
+
+## 3. Utils
+- src/utils/normalizeUrl.ts: ถ้าขึ้นต้นด้วย http:// หรือ https:// -> ใช้เดิม
+  ถ้าไม่ -> prepend https://, ถ้า empty -> คืน ''
+
+## 4. UserMenu (src/components/)
+- AppBar menu แสดง user email + logout button
+- รวมเข้าใน AppShell AppBar
+
+## 5. Responsive (สำคัญ)
+- บน desktop: navigation (Collections + Bookmarks) อยู่ใน AppBar ด้านบนตามปกติ
+- บน mobile: ย้าย Collections + Bookmarks ไปเป็น bottom navigation bar ด้านล่างจอ
+  ใช้ useMediaQuery หรือ theme.breakpoints ตรวจขนาดจอ
+- ทุก page ต้อง responsive ใช้ได้ทั้ง desktop และ mobile
+
+## 6. แก้บัค Login (เร่งด่วน)
+ตอนนี้หน้า login มีบัค - พอเข้าหน้า login ยังไม่ได้กดปุ่มเลย มัน redirect ไป Auth0 เลย
+ที่ถูกคือต้องรอให้ user กดปุ่ม login ก่อนถึงค่อยไป
+เช็คว่าอะไร trigger redirect อัตโนมัติ (เช่น useEffect ที่เรียก loginWithRedirect,
+หรือ default route / ที่ redirect ไป /collections ที่ protected แล้ววนไป Auth0)
+แก้ให้หน้า login แสดงปุ่มแล้วรอ user กดเท่านั้น
+
+## ทดสอบ
+- npm run type-check ผ่าน
+- npm run build ผ่าน
+- สตาร์ท backend + frontend, login ผ่าน Auth0 ด้วย test user (candidate@test.com)
+- สร้าง/แก้/ลบ collection ได้ ข้อมูลอัปเดตทันที
+- สร้าง bookmark พิมพ์ www.google.com -> submit สำเร็จ (normalizeUrl prepend https://)
+- ลบ collection -> bookmarks ข้างในยังอยู่กลาย uncategorized
+- ลองปรับขนาด browser เล็กสุด -> navigation ย้ายไปด้านล่าง
+- หน้า login รอกดปุ่มถึง redirect
+
+--- AGENT RESPONSE ---
+ดำเนินการ Implement Frontend Logic, TanStack Query Hooks, Responsive UI, และแก้ไขบั๊ก Login Automatic Redirect เรียบร้อยแล้ว:
+1. แก้ไขบั๊ก Login Automatic Redirect: ปรับ `ProtectedRoute.tsx` ให้ส่งต่อผู้ใช้ไปยัง `/login` โดยไม่เรียก `loginWithRedirect()` ใน Render Pass และปรับ `LoginPage.tsx` ให้แสดงการ์ดล็อกอินและรอดำเนินการจนกว่าผู้ใช้จะกดปุ่ม "Log In with Auth0 (PKCE OIDC)"
+2. สร้าง TanStack Query Hooks (src/hooks/):
+   - `useCollections.ts`: `useGetCollections()`, `useGetCollectionsWithBookmarks()`, `useGetCollection()`, `useCreateCollection()`, `useUpdateCollection()`, `useDeleteCollection()` (พร้อม Query Invalidation ของทั้ง `['collections']` และ `['bookmarks']` รองรับ onDelete SetNull)
+   - `useBookmarks.ts`: `useGetBookmarks()`, `useGetBookmark()`, `useCreateBookmark()`, `useUpdateBookmark()`, `useDeleteBookmark()` (พร้อม Invalidation `['bookmarks']` และ `['collections']`)
+3. สร้าง `src/utils/normalizeUrl.ts`: แปลง URL ที่ป้อน (หากไม่มี `http://` หรือ `https://` จะทำการ Prepend `https://` ให้อัตโนมัติ เช่น `www.google.com` -> `https://www.google.com`)
+4. สร้าง `src/components/UserMenu.tsx`: เมนูโปรไฟล์ผู้ใช้ แสดงภาพ Avatar, อีเมล, User Sub, และปุ่ม Log Out บน Navigation Bar
+5. พัฒนา Pages & Dialogs:
+   - `CollectionsPage.tsx`: แสดงรายการ Collections ในรูปแบบ Responsive Grid พร้อมปุ่มสร้าง, แก้ไข (Edit Dialog), และลบ (Confirm Dialog แจ้งเตือนนโยบาย Uncategorized)
+   - `BookmarksPage.tsx`: รองรับทั้ง Mode All Bookmarks (`/bookmarks`) และ Collection Mode (`/collections/:id`), แถบค้นหา Real-time, ตัวกรอง Collection, ปุ่มสร้าง/แก้ไข/ลบ และการเปิดลิงก์ภายนอกผ่าน New Tab
+6. พัฒนา Responsive Design:
+   - ฝั่ง Desktop: แสดง Navigation Links บน AppBar ด้านบน
+   - ฝั่ง Mobile: ย้าย Navigation ไปยัง Bottom Navigation Bar ด้านล่างของจอ (`<BottomNavigation>` fixed at bottom) ผ่าน `useMediaQuery`
+7. ผ่านการตรวจสอบ `npm run type-check`, `npm run lint`, และ `npm run build` ผ่าน 100%
+
+=========================================
