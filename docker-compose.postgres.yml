@@ -7,7 +7,7 @@ services:
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_DB=bookmark_db
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -21,11 +21,14 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
+      args:
+        DATABASE_MODE: postgres
     container_name: bookmark_backend_postgres
     ports:
       - "3001:3001"
     environment:
       - PORT=3001
+      - DATABASE_MODE=postgres
       - DATABASE_URL=postgresql://postgres:postgres@db:5432/bookmark_db?schema=public
       - AUTH0_DOMAIN=dev-yg.us.auth0.com
       - AUTH0_AUDIENCE=https://bbl-candidate-test-api

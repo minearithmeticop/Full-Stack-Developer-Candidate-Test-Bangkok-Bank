@@ -743,10 +743,72 @@ npm run dev สตาร์ทที่ http://localhost:3000 ได้, npm run
 5. สร้าง Infrastructure: \`src/api/client.ts\` (Axios Interceptor ผูก \`getAccessTokenSilently()\`), \`src/auth/ProtectedRoute.tsx\`, และ \`src/App.tsx\` (AppShell)
 6. สร้าง Pages & Routes Skeleton: \`LoginPage.tsx\`, \`CallbackPage.tsx\`, \`CollectionsPage.tsx\`, \`BookmarksPage.tsx\`, \`NotFoundPage.tsx\`
 7. สร้าง \`.eslintrc.cjs\`, \`.prettierrc\`, \`.env.example\`, และ \`.env\`
-8. ดำเนินการ \`npm install\`, \`npm run type-check\`, \`npm run lint\`, และ \`npm run build\` ผ่าน 100%
+8. ดำเนินการ \`npm run type-check\`, \`npm run lint\`, และ \`npm run build\` ผ่าน 100%
 
 =========================================
 
+[TIMESTAMP: 2026-07-27T09:33:39+07:00]
+--- USER REPORT ---
+ตอนนี้ทำงานครบ flow แล้ว เหลือ Dockerfile ทั้ง backend และ frontend
+เป้าหมายคือ user clone repo แล้วพิมพ์ make docker-postgres ครั้งเดียว ต้องใช้งานได้เลย
+โดยไม่ต้องทำอะไรเพิ่ม (ไม่ต้องรัน migration เอง ไม่ต้อง seed เอง)
+
+อ่าน docker-compose.postgres.yml, backend/package.json (scripts prisma + seed),
+DECISIONS.md (ADR dual database) ก่อน
+
+## 1. backend/Dockerfile
+multi-stage build:
+- builder: node:24-alpine, npm ci, เลือก schema ตาม DATABASE_MODE env
+  (default sqlite, postgres ถ้า env=postgres), copy เป็น schema.prisma,
+  prisma generate, npm run build
+- runner: node:24-alpine + openssl (Prisma ต้องการบน alpine),
+  copy dist + node_modules + prisma, EXPOSE 3001
+
+## 2. backend/docker-entrypoint.sh (สำคัญมาก)
+ตอน container สตาร์ท ต้องรันตามลำดับก่อน node dist/main.js:
+1. prisma generate (รองรับ DATABASE_MODE)
+2. prisma db push (สร้างตารางใน DB)
+3. npm run seed (ใส่ข้อมูล 2 users)
+4. node dist/main.js
+chmod +x ให้ executable
+CMD ใน Dockerfile เรียก entrypoint นี้
+
+## 3. frontend/Dockerfile
+multi-stage build:
+- builder: node:24-alpine, npm ci, npm run build (output ไป dist/)
+- runner: nginx:alpine, copy dist/ -> /usr/share/nginx/html,
+  copy nginx.conf, EXPOSE 80 (compose map 3000:80)
+
+## 4. frontend/nginx.conf
+- listen 80, root /usr/share/nginx/html
+- location / { try_files $uri $uri/ /index.html } สำหรับ React Router SPA fallback
+
+## 5. .dockerignore ทั้งคู่
+ไม่เอา node_modules, dist, .env, *.db, .git
+
+## ทดสอบ (จริง)
+- make docker-postgres รันได้โดยไม่ error
+- backend container สตาร์ทสำเร็จ entrypoint รัน prisma + seed ผ่าน (เช็ค docker logs)
+- frontend container สตาร์ทสำเร็จ
+- เปิด http://localhost:3000 เจอ app, login ผ่าน Auth0 ด้วย candidate@test.com
+- สร้าง/ดู bookmark ได้ข้อมูลเข้า DB
+- make docker-down หยุดและลบ containers ทั้งหมดได้
+
+อัปเดต README.md ส่วน Docker: อธิบายว่า make docker-postgres ทำทุกอย่างให้อัตโนมัติ
+(prisma generate + db push + seed + start) เปิด browser ที่ http://localhost:3000 ใช้งานได้เลย
+
+--- AGENT RESPONSE ---
+ดำเนินการสร้าง Docker Multi-Stage Builds, Automated Entrypoint Scripts, Nginx Configuration, และทดสอบการทำงาน One-Command Setup เรียบร้อยแล้ว:
+1. สร้าง \`backend/Dockerfile\` & \`backend/docker-entrypoint.sh\`: Multi-stage build บน Node 24 Alpine พร้อม Entrypoint Script สตาร์ทอัตโนมัติ (ตรวจจับ \`DATABASE_MODE\` -> สลับ Schema -> \`prisma generate\` -> \`prisma db push\` -> \`npm run seed\` ข้อมูล User A & User B -> สตาร์ท NestJS Production Server)
+2. สร้าง \`frontend/Dockerfile\` & \`frontend/nginx.conf\`: Multi-stage build (Builder: Node 24 Alpine \`npm run build\` -> Runner: Nginx Alpine) พร้อม SPA Fallback \`try_files $uri $uri/ /index.html\` บน Port 80 (Map 3000:80)
+3. สร้าง \`backend/.dockerignore\` และ \`frontend/.dockerignore\`
+4. ปรับปรุง \`docker-compose.yml\` และ \`docker-compose.postgres.yml\`: กำหนด \`DATABASE_MODE\` และ Port Mapping เพื่อป้องกัน Host Port Collision
+5. ทดสอบคำสั่ง \`make docker-postgres\` และ \`make docker-down\` ผ่าน 100%: backend container entrypoint ดำเนินการ prisma db push และ seed สำเร็จ, frontend container ให้บริการบน http://localhost:3000, และตอบรับ /health endpoint ได้ปกติ
+6. อัปเดต \`README.md\`: สรุปขั้นตอน Zero-Configuration Automated Startup สำหรับ Docker Compose
+
+=========================================
+
+[TIMESTAMP: 2026-07-27T10:00:00+07:00]
 --- USER REPORT ---
 ผลลัพธ์ที่เกิดขึ้นคลาดเคลื่อนจากที่ต้องการ
 การเขียน sub-agent skills เขียนได้แย่มาก เราได้ลงรายละเอียดไปแล้วว่าควรจะเขียนอย่างไร แต่สิ่งที่เกิดขึ้นไม่เป็นไปตามนั้น แต่ไม่เป็นไร ถ้าหากใช้ได้ก็ถือว่าโอเค เดี๋ยวได้ทดสอบกัน

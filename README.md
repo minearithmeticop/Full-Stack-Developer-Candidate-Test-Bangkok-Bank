@@ -175,24 +175,39 @@ make build
 
 ---
 
-### ทางเลือกที่ 2: รันด้วย Docker Compose (Full Stack Containerized)
+### ทางเลือกที่ 2: รันด้วย Docker Compose (Full Stack Containerized - One-Command Setup) ⭐⭐
+
+> [!IMPORTANT]
+> **🚀 Zero-Configuration Automated Startup**:
+> ทั้งโหมด SQLite และ PostgreSQL รองรับการทำงานแบบ **Fully Automated Entrypoint**:
+> - เมื่อสั่งรัน `docker compose` ระบบจะทำการรัน `prisma generate`, อัปเดตโครงสร้างฐานข้อมูลด้วย `prisma db push`, และทำการ Seed ข้อมูลเริ่มต้น (User A และ User B) **ให้อัตโนมัติใน Container โดยผู้พัฒนาไม่ต้องรันคำสั่งใตๆ เพิ่มเติม**!
 
 #### โหมด 1: SQLite Full Stack
 ```bash
-# เริ่มการทำงานของ Backend (SQLite) และ Frontend Containers
-docker compose up -d
+# สตาร์ท Backend (SQLite) และ Frontend Containers (สร้าง DB, Run Migration และ Seed Data อัตโนมัติ)
+make docker-up
+# หรือรันผ่าน Docker Compose โดยตรง:
+# docker compose up -d
 
-# ปิดการทำงานของ Containers
-docker compose down --remove-orphans
+# เปิดเว็บเบราว์เซอร์ใช้งานที่: http://localhost:3000
+# เข้าสู่ระบบด้วย Test Credentials: candidate@test.com / @password1234
+
+# ปิดการทำงานและลบ Containers
+make docker-down
 ```
 
-#### โหมด 2: PostgreSQL Full Stack
+#### โหมด 2: PostgreSQL Full Stack (แนะนำสำหรับ Production Ready Assessment) ⭐
 ```bash
-# เริ่มการทำงานของ PostgreSQL Database (postgres:17-alpine), Backend และ Frontend Containers
-docker compose -f docker-compose.postgres.yml up -d
+# สตาร์ท PostgreSQL Database (postgres:17-alpine), Backend และ Frontend Containers ครบจบในคำสั่งเดียว!
+make docker-postgres
+# หรือรันผ่าน Docker Compose โดยตรง:
+# docker compose -f docker-compose.postgres.yml up -d
 
-# ปิดการทำงานของ Containers
-docker compose -f docker-compose.postgres.yml down --remove-orphans
+# เปิดเว็บเบราว์เซอร์ใช้งานที่: http://localhost:3000
+# เข้าสู่ระบบด้วย Test Credentials: candidate@test.com / @password1234
+
+# ปิดการทำงานและลบ Containers
+make docker-down
 ```
 
 ---

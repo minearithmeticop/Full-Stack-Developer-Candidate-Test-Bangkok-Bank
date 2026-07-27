@@ -3,11 +3,14 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
+      args:
+        DATABASE_MODE: sqlite
     container_name: bookmark_backend_sqlite
     ports:
       - "3001:3001"
     environment:
       - PORT=3001
+      - DATABASE_MODE=sqlite
       - DATABASE_URL=file:./dev.db
       - AUTH0_DOMAIN=dev-yg.us.auth0.com
       - AUTH0_AUDIENCE=https://bbl-candidate-test-api
