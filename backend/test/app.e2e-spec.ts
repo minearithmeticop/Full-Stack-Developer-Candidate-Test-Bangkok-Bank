@@ -3,7 +3,7 @@ import { INestApplication, ValidationPipe } from '@nestjs/common';
 import * as request from 'supertest';
 import { AppModule } from './../src/app.module';
 
-describe('HealthController (e2e)', () => {
+describe('Security & Authentication (e2e)', () => {
   let app: INestApplication;
 
   beforeAll(async () => {
@@ -26,13 +26,31 @@ describe('HealthController (e2e)', () => {
     await app.close();
   });
 
-  it('/health (GET)', () => {
-    return request(app.getHttpServer())
-      .get('/health')
-      .expect(200)
-      .expect((res) => {
-        expect(res.body.status).toBe('ok');
-        expect(res.body.timestamp).toBeDefined();
-      });
+  describe('Public Endpoints', () => {
+    it('/health (GET) should return 200 OK without token', () => {
+      return request(app.getHttpServer())
+        .get('/health')
+        .expect(200)
+        .expect((res) => {
+          expect(res.body.status).toBe('ok');
+          expect(res.body.timestamp).toBeDefined();
+        });
+    });
+  });
+
+  describe('Protected Endpoints Security Boundary', () => {
+    it('/api/v1/me (GET) without token should return 401 Unauthorized', () => {
+      return request(app.getHttpServer()).get('/api/v1/me').expect(401);
+    });
+
+    it('/api/v1/collections (GET) without token should return 401 Unauthorized', () => {
+      return request(app.getHttpServer())
+        .get('/api/v1/collections')
+        .expect(401);
+    });
+
+    it('/api/v1/bookmarks (GET) without token should return 401 Unauthorized', () => {
+      return request(app.getHttpServer()).get('/api/v1/bookmarks').expect(401);
+    });
   });
 });

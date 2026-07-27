@@ -549,4 +549,46 @@ entry ล่าสุดมี backtick ดิบๆ อยู่ข้างใ
 
 =========================================
 
+[TIMESTAMP: 2026-07-27T07:24:41+07:00]
+--- USER REPORT ---
+ตอนนี้ backend scaffold เสร็จ ขั้นนี้ implement ระบบ auth และ security
+อ่าน AGENTS.md (Invariant 3), DECISIONS.md (ADR เรื่อง OIDC), และ API_DESIGN.md
+(ส่วน Authentication) ก่อน
+
+เป้าหมาย: ทุก endpoint ยกเว้น /health ต้องผูกกับ Auth0 JWT verification แบบ stateless,
+และมี /me ที่คืนข้อมูล user จาก token
+
+1. JwtStrategy (src/auth/jwt.strategy.ts) ใช้ passport-jwt + jwks-rsa
+   verify RS256 stateless ผ่าน Auth0 JWKS
+   - jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken()
+   - secretOrKeyProvider: jwks-rsa ชี้ไป Auth0 JWKS endpoint, เปิด cache + rateLimit
+   - audience, issuer, algorithms ตามที่ระบุใน DECISIONS.md
+
+2. JwtAuthGuard (src/auth/jwt-auth.guard.ts) extends AuthGuard('jwt')
+   canActivate skip guard ถ้ามี @Public() (ใช้กับ HealthController เท่านั้น)
+
+3. @CurrentUser decorator ดึง user จาก req.user, รองรับ @CurrentUser('sub')
+
+4. @Public decorator + ตรรกะ skip guard
+
+5. ใช้ APP_GUARD provider ผูก JwtAuthGuard ทั้งระบบใน app.module.ts
+
+6. MeController @Get() คืน { id, email, emailVerified } จาก @CurrentUser()
+
+ทดสอบที่ AI ทำได้:
+- npm run type-check ผ่าน
+- สตาร์ท server, GET /me ไม่มี token -> 401
+- GET /health -> 200 (public)
+
+--- AGENT RESPONSE ---
+ดำเนินการ implement ระบบ Auth0 JWT Authentication และ Security Guardrails ฝั่ง Backend เรียบร้อยแล้ว:
+1. อัปเดต `JwtStrategy` (src/auth/jwt.strategy.ts): กำหนด passport-jwt ร่วมกับ `jwks-rsa` เพื่อดึง Public Key จาก Auth0 JWKS Endpoint (`/.well-known/jwks.json`) แบบ RS256 Verification โดยมี cache: true และ rateLimit: true
+2. อัปเดต `JwtAuthGuard` (src/auth/jwt-auth.guard.ts): ทำการตรวจสอบ `@Public()` Metadata Key หากมีจะทำการข้าม Auth Check (รองรับ `/health`)
+3. ใช้ `APP_GUARD` Provider ใน `AppModule`: บังคับให้ทุก Endpoint ต้องผ่าน `JwtAuthGuard` 100% (ยกเว้นที่มี `@Public()`)
+4. อัปเดต `MeController` และ `MeService` (src/me/): คืนค่า `{ id, email, emailVerified }` จาก `@CurrentUser()`
+5. เพิ่มชุดทดสอบ E2E Security Boundary ใน `test/app.e2e-spec.ts`: ทดสอบ `GET /health` ตอบ 200 OK (Public) และ `GET /api/v1/me`, `GET /api/v1/collections`, `GET /api/v1/bookmarks` หากไม่มี Token ตอบ 401 Unauthorized (Protected) โดยผ่านการทดสอบ 100%
+
+=========================================
+
+
 

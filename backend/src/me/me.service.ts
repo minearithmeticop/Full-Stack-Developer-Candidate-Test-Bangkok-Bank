@@ -1,10 +1,19 @@
 import { Injectable } from '@nestjs/common';
-import { JwtPayload } from '../auth/jwt.strategy';
+import { UserProfile } from '../auth/jwt.strategy';
+
+export interface MeResponseDto {
+  id: string;
+  email?: string;
+  emailVerified?: boolean;
+}
 
 @Injectable()
 export class MeService {
-  getProfile(user: JwtPayload): JwtPayload {
-    // TODO: Implemented profile retrieval logic
-    return user;
+  getProfile(user: UserProfile): MeResponseDto {
+    return {
+      id: user.id || user.sub,
+      email: user.email,
+      emailVerified: user.emailVerified,
+    };
   }
 }

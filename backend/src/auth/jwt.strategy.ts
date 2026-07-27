@@ -4,20 +4,23 @@ import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { passportJwtSecret } from 'jwks-rsa';
 
-export interface JwtPayload {
+export interface UserProfile {
+  id: string;
   sub: string;
   email?: string;
+  emailVerified?: boolean;
   name?: string;
   picture?: string;
-  iss?: string;
-  aud?: string | string[];
 }
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(configService: ConfigService) {
-    const domain = configService.get<string>('AUTH0_DOMAIN') || 'dev-yg.us.auth0.com';
-    const audience = configService.get<string>('AUTH0_AUDIENCE') || 'https://bbl-candidate-test-api';
+    const domain =
+      configService.get<string>('AUTH0_DOMAIN') || 'dev-yg.us.auth0.com';
+    const audience =
+      configService.get<string>('AUTH0_AUDIENCE') ||
+      'https://bbl-candidate-test-api';
 
     super({
       secretOrKeyProvider: passportJwtSecret({
@@ -33,7 +36,17 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  validate(payload: JwtPayload): JwtPayload {
-    return payload;
+  validate(payload: any): UserProfile {
+    return {
+      id: payload.sub,
+      sub: payload.sub,
+      email: payload.email || payload['https://bbl-candidate-test-api/email'],
+      emailVerified:
+        payload.email_verified ??
+        payload['https://bbl-candidate-test-api/email_verified'] ??
+        false,
+      name: payload.name,
+      picture: payload.picture,
+    };
   }
 }
