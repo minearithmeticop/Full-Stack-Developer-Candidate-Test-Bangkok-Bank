@@ -1,8 +1,12 @@
 # Full-Stack Developer Candidate Test Bangkok Bank
 
 <p align="center">
-  <img src="https://img.shields.io/badge/BUILD%20STATUS-PASSING-brightgreen?style=for-the-badge&logo=githubactions&logoColor=white" alt="BUILD STATUS" />
-  <img src="https://img.shields.io/badge/E2E%20TESTS-100%25%20PASSED-success?style=for-the-badge&logo=jest&logoColor=white" alt="E2E TESTS" />
+  <a href="https://github.com/minearithmeticop/Full-Stack-Developer-Candidate-Test-Bangkok-Bank/actions/workflows/ci.yml">
+    <img src="https://img.shields.io/github/actions/workflow/status/minearithmeticop/Full-Stack-Developer-Candidate-Test-Bangkok-Bank/ci.yml?branch=main&style=for-the-badge&logo=githubactions&logoColor=white&label=BUILD%20STATUS" alt="BUILD STATUS" />
+  </a>
+  <a href="https://github.com/minearithmeticop/Full-Stack-Developer-Candidate-Test-Bangkok-Bank/actions/workflows/ci.yml">
+    <img src="https://img.shields.io/github/actions/workflow/status/minearithmeticop/Full-Stack-Developer-Candidate-Test-Bangkok-Bank/ci.yml?branch=main&job=backend-test&style=for-the-badge&logo=jest&logoColor=white&label=SECURITY%20E2E%20TESTS" alt="SECURITY E2E TESTS" />
+  </a>
   <img src="https://img.shields.io/badge/NODE.JS-%3E%3D24.x-339933?style=for-the-badge&logo=nodedotjs&logoColor=white" alt="NODE.JS" />
   <img src="https://img.shields.io/badge/NESTJS-v10-E0234E?style=for-the-badge&logo=nestjs&logoColor=white" alt="NESTJS" />
   <img src="https://img.shields.io/badge/REACT-19%2B-61DAFB?style=for-the-badge&logo=react&logoColor=black" alt="REACT" />

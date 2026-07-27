@@ -1,0 +1,80 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+jobs:
+  backend-test:
+    name: Backend E2E & Type Check
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    env:
+      PORT: 3001
+      DATABASE_MODE: sqlite
+      DATABASE_URL: "file:./dev.db"
+      AUTH0_DOMAIN: "dev-yg.us.auth0.com"
+      AUTH0_AUDIENCE: "https://bbl-candidate-test-api"
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24.x
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Generate Prisma Client (SQLite)
+        run: npx prisma generate --schema=./prisma/schema.sqlite.prisma
+
+      - name: Push Database Schema (SQLite)
+        run: npx prisma db push --schema=./prisma/schema.sqlite.prisma
+
+      - name: Seed Database Initial Data
+        run: npm run seed
+
+      - name: Run Type Check
+        run: npm run type-check
+
+      - name: Run Supertest E2E Tests
+        run: npm run test:e2e
+
+  frontend-build:
+    name: Frontend Build & Type Check
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24.x
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Run Type Check
+        run: npm run type-check
+
+      - name: Build Production Bundle
+        run: npm run build
