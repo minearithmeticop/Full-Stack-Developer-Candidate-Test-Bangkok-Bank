@@ -661,6 +661,93 @@ Test Matrix) ก่อน
 
 =========================================
 
+[TIMESTAMP: 2026-07-27T08:31:33+07:00]
+--- USER REPORT ---
+เริ่มสร้างส่วน frontend ของโปรเจค เนี่ยขั้นนี้ขอแค่ scaffold โครงให้ครบก่อน
+ยังไม่ต้องเขียน logic เชิงลึกใน pages ใส่ TODO ได้ แต่ infrastructure ต้องทำงานได้
+
+อ่าน README.md, AGENTS.md (Invariant 4 + Coding Guidelines),
+DECISIONS.md (ADR เรื่อง TanStack Query + Axios) ก่อน
+
+1. สร้าง frontend/package.json
+   - React 19+ (เวอร์ชันล่าสุดที่ไม่มีช่องโหว่)
+   - Vite 6
+   - MUI v9
+   - React Router v8
+   - @auth0/auth0-react
+   - @tanstack/react-query v5
+   - axios
+   scripts: dev (vite), build (tsc + vite build), preview (vite preview),
+   type-check (tsc --noEmit), lint, format
+   Vite ตั้ง server port = 3000 (ไม่ใช่ default 5173 เพราะ Auth0 callback)
+
+2. สร้าง frontend/vite.config.ts
+   - react plugin
+   - server.port = 3000 (ไม่ใช่ default 5173 เพราะ Auth0 callback)
+   - resolve alias @ -> ./src
+
+3. สร้าง tsconfig.json + tsconfig.node.json
+   - target ES2022, jsx react-jsx, strict, moduleResolution bundler
+   - paths @/* -> src/*
+
+4. สร้าง frontend/index.html + frontend/src/main.tsx
+   - main.tsx ห่อ App ด้วย Auth0Provider + QueryClientProvider + ThemeProvider + BrowserRouter
+   - Auth0Provider config ดึงจาก import.meta.env:
+     domain, clientId, audience, redirect_uri (http://localhost:3000/callback), scope
+   - useRefreshTokens: true, cacheLocation: 'localstorage'
+
+5. สร้าง theme + App shell
+   - src/theme/index.ts: createTheme ด้วย centralized tokens (palette, typography, spacing)
+   - src/App.tsx: AppShell ด้วย MUI AppBar + Layout + React Router <Routes> (TODO routes)
+
+6. สร้าง Auth + API infrastructure (placeholder ได้):
+   - src/auth/ProtectedRoute.tsx: ใช้ useAuth() isAuthenticated
+     -> ถ้าไม่ login เรียก loginWithRedirect, ถ้า login แล้ว <Outlet />
+   - src/api/client.ts: Axios instance, baseURL = VITE_API_URL
+     interceptor ใส่ Authorization: Bearer <token> จาก getAccessTokenSilently()
+   - src/api/queries.ts: QueryClient ที่ default staleTime 60s
+
+7. สร้าง route skeleton + placeholder pages
+   - src/pages/LoginPage.tsx
+   - src/pages/CallbackPage.tsx
+   - src/pages/CollectionsPage.tsx (TODO)
+   - src/pages/BookmarksPage.tsx (TODO)
+   - src/App.tsx <Routes>:
+     / -> redirect to /collections
+     /login -> LoginPage (public)
+     /callback -> CallbackPage
+     /collections -> ProtectedRoute + CollectionsPage
+     /collections/:id -> ProtectedRoute + BookmarksPage (bookmarks ใน collection)
+     /bookmarks -> ProtectedRoute + BookmarksPage (all bookmarks)
+     * -> NotFoundPage
+
+8. สร้าง ESLint + Prettier + .env.example
+   - frontend/.eslintrc (react-hooks + react-refresh rules)
+   - frontend/.prettierrc
+   - frontend/.env.example ที่มีค่าจริง:
+     VITE_API_URL="http://localhost:3001"
+     VITE_AUTH0_DOMAIN="dev-yg.us.auth0.com"
+     VITE_AUTH0_CLIENT_ID="H9F6QG5SzTKMv0tbmgxLj9LjG1EKVllA"
+     VITE_AUTH0_AUDIENCE="https://bbl-candidate-test-api"
+     VITE_AUTH0_REDIRECT_URI="http://localhost:3000/callback"
+
+เป้าหมาย: cd frontend && npm install ผ่าน, npm run type-check ผ่าน,
+npm run dev สตาร์ทที่ http://localhost:3000 ได้, npm run build ผ่าน
+
+--- AGENT RESPONSE ---
+ดำเนินการ Scaffold โครงสร้าง Frontend (React 19 + Vite 6 + MUI + React Router + Auth0 + TanStack Query v5) เรียบร้อยแล้ว:
+1. สร้าง \`frontend/package.json\`: ติดตั้ง React 19, Vite 6, MUI, @auth0/auth0-react, @tanstack/react-query v5, axios และกำหนดพอร์ต Vite dev server เป็น 3000
+2. สร้าง \`frontend/vite.config.ts\`, \`tsconfig.json\`, \`tsconfig.node.json\`, และ \`src/vite-env.d.ts\`: ตั้งค่าพอร์ต 3000 และ Path Alias \`@/*\` -> \`src/*\`
+3. สร้าง \`frontend/index.html\` และ \`src/main.tsx\`: ห่อหุ้มแอปพลิเคชันด้วย \`Auth0Provider\` (พร้อม \`useRefreshTokens={true}\`, \`cacheLocation="localstorage"\`), \`QueryClientProvider\` (\`staleTime: 60s\`), \`ThemeProvider\`, \`CssBaseline\`, และ \`BrowserRouter\`
+4. สร้าง \`src/theme/index.ts\`: ออกแบบ Design System ธีมเข้ม (Dark Navy & Deep Blue) ด้วย Google Fonts Inter
+5. สร้าง Infrastructure: \`src/api/client.ts\` (Axios Interceptor ผูก \`getAccessTokenSilently()\`), \`src/auth/ProtectedRoute.tsx\`, และ \`src/App.tsx\` (AppShell)
+6. สร้าง Pages & Routes Skeleton: \`LoginPage.tsx\`, \`CallbackPage.tsx\`, \`CollectionsPage.tsx\`, \`BookmarksPage.tsx\`, \`NotFoundPage.tsx\`
+7. สร้าง \`.eslintrc.cjs\`, \`.prettierrc\`, \`.env.example\`, และ \`.env\`
+8. ดำเนินการ \`npm install\`, \`npm run type-check\`, \`npm run lint\`, และ \`npm run build\` ผ่าน 100%
+
+=========================================
+
+
 
 
 `,
