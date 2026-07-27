@@ -808,6 +808,25 @@ multi-stage build:
 
 =========================================
 
+[TIMESTAMP: 2026-07-27T10:12:09+07:00]
+--- USER REPORT ---
+เราเจอบัคเรื่อง search ใน bookmark
+
+สิ่งที่ผิด: ตอนนี้ตอน search bookmark มันค้นหาใน url ด้วย แต่ที่ถูกคือต้อง search แค่ title และ
+notes เท่านั้น
+
+แก้ที่ backend/src/bookmarks/bookmarks.service.ts ในเมธอด findAll ส่วนที่เช็ค search query
+ปัจจุบันมัน OR ทั้ง title, url, notes ต้องเอา url ออกให้เหลือแค่ title กับ notes
+
+--- AGENT RESPONSE ---
+ดำเนินการแก้ไขบั๊กการค้นหา Bookmark ใน BookmarksService.findAll เรียบร้อยแล้ว:
+1. แก้ไข \`backend/src/bookmarks/bookmarks.service.ts\`: ตัดการค้นหาฟิลด์ \`url\` ออกจาก \`where.OR\` คงเหลือเฉพาะฟิลด์ \`title\` และ \`notes\` ตามข้อกำหนด
+2. เพิ่ม E2E Test ใน \`backend/test/security/data-isolation.e2e-spec.ts\`: ทดสอบการค้นหาด้วย \`search\` query เพื่อยืนยันว่าค้นพบจาก Title/Notes และส่งคืนผลลัพธ์ว่างเมื่อค้นหาด้วย substring ของ URL
+3. ผ่านการทดสอบ \`npm run type-check\` ทั้ง Frontend & Backend และ \`npm run test:e2e\` ผ่าน 100% (2 Test Suites, 13 Passed)
+
+=========================================
+
+
 [TIMESTAMP: 2026-07-27T10:00:00+07:00]
 --- USER REPORT ---
 ผลลัพธ์ที่เกิดขึ้นคลาดเคลื่อนจากที่ต้องการ

@@ -25,7 +25,6 @@ export class BookmarksService {
     if (search) {
       where.OR = [
         { title: { contains: search } },
-        { url: { contains: search } },
         { notes: { contains: search } },
       ];
     }

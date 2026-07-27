@@ -167,7 +167,7 @@ describe('Multi-Tenant Data Isolation & Security Matrix (e2e)', () => {
     });
   });
 
-  describe('DTO Payload Validation Guardrails', () => {
+  describe('DTO Payload Validation Guardrails & Search Criteria', () => {
     it('POST bookmark with extra non-whitelisted property should return 400 Bad Request', () => {
       return request(app.getHttpServer())
         .post('/api/v1/bookmarks')
@@ -178,6 +178,26 @@ describe('Multi-Tenant Data Isolation & Security Matrix (e2e)', () => {
           unwhitelistedExtraField: 'maliciousPayload',
         })
         .expect(400);
+    });
+
+    it('GET /api/v1/bookmarks with search query should search ONLY title and notes, NOT url', async () => {
+      // Seed user A has bookmark: title="Bangkok Bank", url="https://www.bangkokbank.com", notes="Official site"
+      // Search by title "Bangkok" -> returns bookmark
+      const titleRes = await request(app.getHttpServer())
+        .get('/api/v1/bookmarks?search=Bangkok')
+        .set('Authorization', 'Bearer token-user-a')
+        .expect(200);
+
+      expect(titleRes.body.length).toBeGreaterThan(0);
+      expect(titleRes.body[0].title).toContain('Bangkok Bank');
+
+      // Search by URL substring "bangkokbank.com" -> returns empty array because URL is excluded from search
+      const urlRes = await request(app.getHttpServer())
+        .get('/api/v1/bookmarks?search=bangkokbank.com')
+        .set('Authorization', 'Bearer token-user-a')
+        .expect(200);
+
+      expect(urlRes.body).toHaveLength(0);
     });
   });
 });
